@@ -62,6 +62,8 @@ function buildFavoriteFromDirection(
     canonicalToward: dir.towards,
     platform: dir.platform,
     allowShortTurns: true,
+    stationOrder: 0,
+    itemOrder: 0,
   };
 }
 

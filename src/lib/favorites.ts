@@ -54,11 +54,11 @@ export function buildDirectionKey(lineName: string, richtungsId: string, directi
 
 // ─── URL Serialization ───
 
-// Readable URL: ?fav=stopId:lineName:richtungsId:direction:canonicalToward:transportType[:platform]&...
+// Readable URL: ?fav=stopId:lineName:richtungsId:direction:canonicalToward:transportType:stationOrder:itemOrder[:platform]&...
 export function toReadableUrl(container: FavoritesContainer, baseUrl: string): string {
   const url = new URL(baseUrl);
   for (const f of container.favorites) {
-    const parts = [f.stopId, f.lineName, f.richtungsId, f.direction, f.canonicalToward, f.transportType];
+    const parts = [f.stopId, f.lineName, f.richtungsId, f.direction, f.canonicalToward, f.transportType, String(f.stationOrder), String(f.itemOrder)];
     if (f.platform) parts.push(f.platform);
     url.searchParams.append('fav', parts.join(':'));
   }
