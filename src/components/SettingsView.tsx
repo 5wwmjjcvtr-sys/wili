@@ -29,7 +29,24 @@ export function SettingsView() {
         </Select>
       </div>
 
-      {/* Data mode */}
+      {/* Refresh interval */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label htmlFor="refresh-interval" className="text-sm">Aktualisierung</Label>
+          <p className="text-xs text-muted-foreground">Sekunden zwischen Daten-Refresh</p>
+        </div>
+        <Select value={String(refreshSec)} onValueChange={(v) => setRefreshInterval(parseInt(v, 10))}>
+          <SelectTrigger className="w-20 h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[10, 15, 20, 30, 45, 60, 90, 120].map(n => (
+              <SelectItem key={n} value={String(n)}>{n}s</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <Label className="text-sm">Datenquelle</Label>
