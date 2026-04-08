@@ -13,6 +13,7 @@ interface FavoritesContextValue {
   removeFavorite: (directionKey: string) => void;
   moveStation: (stopId: string, direction: 'up' | 'down') => void;
   moveItem: (directionKey: string, direction: 'up' | 'down') => void;
+  setDepCount: (n: number) => void;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
@@ -121,6 +122,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       };
     });
   }, []);
+  const setDepCount = useCallback((n: number) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, depCount: n } }));
+  }, []);
 
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
@@ -141,6 +145,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       removeFavorite,
       moveStation,
       moveItem,
+      setDepCount,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,

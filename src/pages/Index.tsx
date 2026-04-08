@@ -7,13 +7,14 @@ import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
 import { LineGroupCard } from '@/components/LineGroupCard';
 import { FavoritesView } from '@/components/FavoritesView';
+import { SettingsView } from '@/components/SettingsView';
 import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
-import { Star, Search } from 'lucide-react';
+import { Star, Search, Settings } from 'lucide-react';
 
 const REFRESH_INTERVAL = 30;
 
-type AppTab = 'search' | 'favorites';
+type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
@@ -111,6 +112,17 @@ function MonitorApp() {
           <Star className="h-4 w-4" />
           Favoriten
         </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === 'settings'
+              ? 'text-foreground border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Settings className="h-4 w-4" />
+          Einstellungen
+        </button>
       </div>
 
       {activeTab === 'search' && (
@@ -201,6 +213,7 @@ function MonitorApp() {
       )}
 
       {activeTab === 'favorites' && <FavoritesView />}
+      {activeTab === 'settings' && <SettingsView />}
     </div>
   );
 }
