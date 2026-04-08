@@ -24,15 +24,24 @@ export async function fetchScheduleBounds(stopId: string): Promise<ScheduleBound
  * Fuzzy-match schedule bounds entries to directions in a StationView.
  * Modifies the stationView in place by adding scheduleBounds to matching directions.
  */
+/** Normalize a headsign for comparison: lowercase, strip "wien " prefix, trim */
+function norm(s: string): string {
+  return s.toLowerCase().replace(/^wien\s+/, '').trim();
+}
+
+/**
+ * Fuzzy-match schedule bounds entries to directions in a StationView.
+ * Modifies the stationView in place by adding scheduleBounds to matching directions.
+ */
 export function mergeScheduleBounds(
   stationView: StationView,
   bounds: ScheduleBoundsEntry[]
 ): StationView {
-  // Build lookup: lineName -> towards (lowercase) -> bounds
+  // Build lookup: lineName -> normalized towards -> bounds
   const lookup = new Map<string, Map<string, { first: string; last: string }>>();
   for (const b of bounds) {
     if (!lookup.has(b.lineName)) lookup.set(b.lineName, new Map());
-    lookup.get(b.lineName)!.set(b.towards.toLowerCase(), {
+    lookup.get(b.lineName)!.set(norm(b.towards), {
       first: b.firstDeparture,
       last: b.lastDeparture,
     });
@@ -46,18 +55,35 @@ export function mergeScheduleBounds(
         const lineEntries = lookup.get(lg.name);
         if (!lineEntries) return dir;
 
-        // Try exact match first
-        const dirTowards = dir.towards.toLowerCase();
-        let match = lineEntries.get(dirTowards);
+        const dirNorm = norm(dir.towards);
 
-        // Fuzzy: check if any GTFS headsign contains or is contained by the direction towards
+        // 1. Exact match (after normalization)
+        let match = lineEntries.get(dirNorm);
+
+        // 2. Substring match (either direction)
         if (!match) {
           for (const [key, val] of lineEntries) {
-            if (key.includes(dirTowards) || dirTowards.includes(key)) {
+            if (key.includes(dirNorm) || dirNorm.includes(key)) {
               match = val;
               break;
             }
           }
+        }
+
+        // 3. Word overlap: pick best match by shared word count
+        if (!match) {
+          const dirWords = new Set(dirNorm.split(/[\s/,.-]+/).filter(Boolean));
+          let bestScore = 0;
+          for (const [key, val] of lineEntries) {
+            const keyWords = key.split(/[\s/,.-]+/).filter(Boolean);
+            const overlap = keyWords.filter(w => dirWords.has(w)).length;
+            if (overlap > bestScore) {
+              bestScore = overlap;
+              match = val;
+            }
+          }
+          // Require at least 1 word overlap
+          if (bestScore === 0) match = undefined;
         }
 
         if (match) {
