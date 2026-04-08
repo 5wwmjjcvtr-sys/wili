@@ -186,7 +186,7 @@ function MonitorApp() {
         </>
       )}
 
-      {activeTab === 'favorites' && <FavoritesView />}
+      {activeTab === 'favorites' && <FavoritesView onOpenSettings={() => setActiveTab('settings')} />}
       {activeTab === 'settings' && <SettingsView />}
 
       {/* Settings button at bottom right - only on search and favorites tabs */}

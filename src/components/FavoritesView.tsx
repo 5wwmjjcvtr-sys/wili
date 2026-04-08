@@ -213,7 +213,27 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
 
       {editMode && <ShareLinks />}
 
-      {/* Edit button rendered via parent */}
+      {/* Bottom action buttons */}
+      <div className="px-4 py-3 flex justify-end gap-2">
+        <button
+          onClick={() => setEditMode(!editMode)}
+          className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
+            editMode
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground border border-border'
+          }`}
+          aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
+        >
+          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={onOpenSettings}
+          className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
+          aria-label="Einstellungen"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
