@@ -11,6 +11,8 @@ export interface Favorite {
   canonicalToward: string;
   platform?: string;
   allowShortTurns: boolean;
+  stationOrder: number;
+  itemOrder: number;
 }
 
 export interface FavoritesPrefs {
