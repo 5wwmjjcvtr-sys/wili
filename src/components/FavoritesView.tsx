@@ -99,12 +99,14 @@ export function FavoritesView() {
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditMode(!editMode)}>
           {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
         </Button>
-        {!editMode && (
-          <Button variant="ghost" size="sm" onClick={loadFavorites} disabled={loading}>
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-        )}
       </div>
+      {!editMode && (
+        <StatusBar
+          updatedAt={updatedAt}
+          refreshInterval={30}
+          onRefresh={loadFavorites}
+        />
+      )}
 
       {error && (
         <div className="px-4 py-3">
