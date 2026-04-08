@@ -108,17 +108,6 @@ function MonitorApp() {
           <Search className="h-4 w-4" />
           Station
         </button>
-        <button
-          onClick={() => setActiveTab(activeTab === 'settings' ? 'favorites' : 'settings')}
-          className={`flex items-center justify-center px-3 py-2.5 transition-colors ${
-            activeTab === 'settings'
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          aria-label="Einstellungen"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
       </div>
 
       {activeTab === 'search' && (
