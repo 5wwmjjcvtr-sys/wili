@@ -174,12 +174,12 @@ export function FavoritesView() {
                               {matchingDepartures.length > 0 ? (
                                 <div className="space-y-1">
                                   {matchingDepartures.map((dep, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
-                                      {dep.isShort && dep.towards && (
-                                        <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
-                                      )}
-                                    </div>
+                                    <DepartureRow
+                                      key={i}
+                                      departure={dep.departure}
+                                      isShortTurn={dep.isShort}
+                                      shortTurnTowards={dep.towards}
+                                    />
                                   ))}
                                 </div>
                               ) : view ? (
