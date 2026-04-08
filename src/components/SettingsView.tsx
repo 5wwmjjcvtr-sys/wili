@@ -2,14 +2,17 @@ import { useDataProvider } from '@/providers/ProviderContext';
 import { useFavorites } from '@/providers/FavoritesContext';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function SettingsView() {
   const { mode, setMode, showDebugUrl, setShowDebugUrl } = useDataProvider();
-  const { prefs, setDepCount, setRefreshInterval, setThemePref } = useFavorites();
+  const { prefs, setDepCount, setRefreshInterval, setThemePref, setShowFirstDep, setShowLastDep } = useFavorites();
   const depCount = prefs.depCount ?? 3;
   const refreshSec = prefs.refreshInterval ?? 30;
   const theme = prefs.theme ?? 'system';
+  const showFirstDep = prefs.showFirstDep !== false;
+  const showLastDep = prefs.showLastDep !== false;
 
   return (
     <div className="flex-1 px-4 py-4 space-y-6">
@@ -17,7 +20,10 @@ export function SettingsView() {
 
       {/* Departure count */}
       <div className="flex items-center justify-between">
-        <Label htmlFor="dep-count" className="text-sm">Angezeigte Abfahrten</Label>
+        <div>
+          <Label htmlFor="dep-count" className="text-sm">Angezeigte Abfahrten</Label>
+          <p className="text-xs text-muted-foreground">Maximal 70 Minuten</p>
+        </div>
         <Select value={String(depCount)} onValueChange={(v) => setDepCount(parseInt(v, 10))}>
           <SelectTrigger className="w-20 h-8 text-sm">
             <SelectValue />
@@ -28,6 +34,18 @@ export function SettingsView() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* First / Last departure toggles */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Checkbox id="show-first" checked={showFirstDep} onCheckedChange={(v) => setShowFirstDep(!!v)} />
+          <Label htmlFor="show-first" className="text-sm">Erste Fahrt anzeigen</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox id="show-last" checked={showLastDep} onCheckedChange={(v) => setShowLastDep(!!v)} />
+          <Label htmlFor="show-last" className="text-sm">Letzte Fahrt anzeigen</Label>
+        </div>
       </div>
 
       {/* Refresh interval */}
