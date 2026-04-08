@@ -20,12 +20,33 @@ const LINE_TYPE_COLORS: Record<LineType, string> = {
   nightline: 'bg-[hsl(var(--wl-nightline))]',
 };
 
+const UBAHN_COLORS: Record<string, string> = {
+  U1: '#ED1C24',
+  U2: '#A666B0',
+  U3: '#F58220',
+  U4: '#00A651',
+  U5: '#A6C73A',
+  U6: '#A8743A',
+};
+
+function getLineBadgeStyle(lineGroup: LineGroup): { className: string; style?: React.CSSProperties } {
+  if (lineGroup.type === 'metro' && UBAHN_COLORS[lineGroup.name]) {
+    return {
+      className: 'text-xs font-bold text-white px-2 py-0.5 rounded',
+      style: { backgroundColor: UBAHN_COLORS[lineGroup.name] },
+    };
+  }
+  return {
+    className: `text-xs font-bold text-primary-foreground px-2 py-0.5 rounded ${LINE_TYPE_COLORS[lineGroup.type]}`,
+  };
+}
+
 export function LineGroupCard({ lineGroup }: Props) {
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Line header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border">
-        <span className={`text-xs font-bold text-primary-foreground px-2 py-0.5 rounded ${LINE_TYPE_COLORS[lineGroup.type]}`}>
+        <span className={getLineBadgeStyle(lineGroup).className} style={getLineBadgeStyle(lineGroup).style}>
           {lineGroup.name}
         </span>
         <span className="text-xs text-muted-foreground">{LINE_TYPE_LABELS[lineGroup.type]}</span>
