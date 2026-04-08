@@ -8,7 +8,7 @@ export function DepartureRow({ departure }: Props) {
   const formatTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
-      return date.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     } catch {
       return '--:--';
     }
