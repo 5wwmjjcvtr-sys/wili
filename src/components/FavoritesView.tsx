@@ -172,21 +172,32 @@ export function FavoritesView() {
                       <div className="px-3 py-2.5">
                         {(() => {
                           const matchingDepartures = findMatchingDepartures(view, fav, depCount);
-                          return matchingDepartures.length > 0 ? (
-                            <div className="space-y-1">
-                              {matchingDepartures.map((dep, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                  <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
-                                  {dep.isShort && dep.towards && (
-                                    <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
-                                  )}
+                          const bounds = findScheduleBounds(view, fav);
+                          return (
+                            <>
+                              {matchingDepartures.length > 0 ? (
+                                <div className="space-y-1">
+                                  {matchingDepartures.map((dep, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
+                                      {dep.isShort && dep.towards && (
+                                        <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          ) : view ? (
-                            <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">Laden…</p>
+                              ) : view ? (
+                                <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">Laden…</p>
+                              )}
+                              {bounds && (
+                                <div className="flex gap-4 mt-1.5 pt-1.5 border-t border-border/50 text-xs text-muted-foreground">
+                                  <span>Erste Fahrt: <span className="font-mono">{bounds.firstDeparturePlanned || '–'}</span></span>
+                                  <span>Letzte Fahrt: <span className="font-mono">{bounds.lastDeparturePlanned || '–'}</span></span>
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
                       </div>
