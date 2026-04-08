@@ -35,8 +35,7 @@ function MonitorApp() {
           setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
         }
       } else {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        setLastApiUrl(`${supabaseUrl}/functions/v1/station-view  POST { "stopId": "${stopId}" }`);
+        setLastApiUrl(`POST station-view { "stopId": "${stopId}" }`);
       }
 
       const view = await provider.getStationView(stopId);
