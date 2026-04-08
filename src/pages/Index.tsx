@@ -189,13 +189,6 @@ function MonitorApp() {
             </div>
           )}
 
-          {!selectedStop && !loading && (
-            <div className="flex-1 flex items-center justify-center px-4">
-              <p className="text-muted-foreground text-sm text-center">
-                Gib eine Wiener-Linien-Station ein, um die nächsten Abfahrten zu sehen.
-              </p>
-            </div>
-          )}
         </>
       )}
 
