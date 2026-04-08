@@ -39,7 +39,7 @@ export function StatusBar({ updatedAt, refreshInterval, onRefresh }: Props) {
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground bg-muted/50 border-b border-border sticky top-[41px] z-30">
+    <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground bg-background border-b border-border sticky top-[41px] z-30">
       <span>Aktualisiert: {formatTime(updatedAt)}</span>
       <div className="flex items-center gap-2">
         <span>Neu in {countdown} s</span>
