@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      schedule_bounds: {
+        Row: {
+          computed_date: string
+          created_at: string | null
+          first_departure: string
+          id: string
+          last_departure: string
+          line_name: string
+          stop_diva: string
+          towards: string
+        }
+        Insert: {
+          computed_date: string
+          created_at?: string | null
+          first_departure: string
+          id?: string
+          last_departure: string
+          line_name: string
+          stop_diva: string
+          towards: string
+        }
+        Update: {
+          computed_date?: string
+          created_at?: string | null
+          first_departure?: string
+          id?: string
+          last_departure?: string
+          line_name?: string
+          stop_diva?: string
+          towards?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
