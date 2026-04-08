@@ -145,7 +145,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     const compact = JSON.parse(json);
     if (compact?.v !== 1) return null;
 
-    const favorites: Favorite[] = (compact.f || []).map((f: any) => ({
+    const favorites: Favorite[] = (compact.f || []).map((f: any, index: number) => ({
       stopId: f.s,
       stationTitle: '',
       lineName: f.l,
@@ -156,6 +156,8 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
       canonicalToward: f.c,
       platform: f.p || undefined,
       allowShortTurns: true,
+      stationOrder: f.o ?? index,
+      itemOrder: f.i ?? index,
     }));
 
     const prefs: FavoritesPrefs = {};
