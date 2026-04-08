@@ -71,6 +71,8 @@ function buildFavoriteFromDirection(
 
 export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props) {
   const badgeStyle = getLineBadgeStyle(lineGroup);
+  const { prefs } = useFavorites();
+  const depCount = getEffectiveDepCount(prefs);
 
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
