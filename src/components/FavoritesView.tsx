@@ -78,6 +78,7 @@ export function FavoritesView() {
   }
 
   // Group favorites by station, sorted by stationOrder then itemOrder
+  // Normalize: ensure unique orders so swapping works
   const sortedFavorites = [...favorites].sort((a, b) => a.stationOrder - b.stationOrder || a.itemOrder - b.itemOrder);
   const groupedByStation = new Map<string, Favorite[]>();
   for (const fav of sortedFavorites) {
@@ -91,18 +92,14 @@ export function FavoritesView() {
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <span className="text-xs text-muted-foreground">{favorites.length} Favorit{favorites.length !== 1 ? 'en' : ''}</span>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setEditMode(!editMode)}>
-            {editMode ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-            <span className="text-xs ml-1">{editMode ? 'Fertig' : 'Bearbeiten'}</span>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditMode(!editMode)}>
+          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </Button>
+        {!editMode && (
+          <Button variant="ghost" size="sm" onClick={loadFavorites} disabled={loading}>
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          {!editMode && (
-            <Button variant="ghost" size="sm" onClick={loadFavorites} disabled={loading}>
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       {error && (
@@ -209,7 +206,7 @@ export function FavoritesView() {
         })}
       </div>
 
-      <ShareLinks />
+      {editMode && <ShareLinks />}
     </div>
   );
 }
