@@ -128,6 +128,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, depCount: n } }));
   }, []);
 
+  const setRefreshInterval = useCallback((n: number) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, refreshInterval: n } }));
+  }, []);
+
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
     return toReadableUrl(container, base);
