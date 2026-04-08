@@ -1,14 +1,19 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataProviderWrapper, useDataProvider } from '@/providers/ProviderContext';
+import { FavoritesProvider } from '@/providers/FavoritesContext';
 import { AppHeader } from '@/components/AppHeader';
 import { StationSearch } from '@/components/StationSearch';
 import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
 import { LineGroupCard } from '@/components/LineGroupCard';
+import { FavoritesView } from '@/components/FavoritesView';
 import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
+import { Star, Search } from 'lucide-react';
 
 const REFRESH_INTERVAL = 30;
+
+type AppTab = 'search' | 'favorites';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
@@ -16,6 +21,7 @@ function MonitorApp() {
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<AppTab>('search');
   const stopRef = useRef<string | null>(null);
   const boundsRef = useRef<any[]>([]);
 
@@ -23,7 +29,6 @@ function MonitorApp() {
     setLoading(true);
     setError(null);
     try {
-      // Build debug URL
       if (mode === 'direct') {
         const { loadRblMapping } = await import('@/lib/stops-loader');
         const rblMap = await loadRblMapping();
@@ -60,10 +65,8 @@ function MonitorApp() {
     boundsRef.current = [];
     setStationView(null);
     fetchStation(stop.stopId);
-    // Fetch schedule bounds once per station change (non-blocking)
     fetchScheduleBounds(stop.stopId).then((bounds) => {
       boundsRef.current = bounds;
-      // Re-merge if we already have a station view
       setStationView((prev) => prev ? mergeScheduleBounds(prev, bounds) : prev);
     });
   }, [fetchStation]);
@@ -74,7 +77,6 @@ function MonitorApp() {
     }
   }, [fetchStation]);
 
-  // Re-fetch when provider changes
   useEffect(() => {
     if (stopRef.current) {
       fetchStation(stopRef.current);
@@ -84,88 +86,121 @@ function MonitorApp() {
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <AppHeader />
-      {showDebugUrl && lastApiUrl && (
-        <div className="px-4 py-1.5 bg-muted/30 border-b border-border">
-          {lastApiUrl.startsWith('http') ? (
-            <a
-              href={lastApiUrl.split(/\s+/)[0]}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-mono text-primary underline break-all leading-tight block"
-            >
-              {lastApiUrl}
-            </a>
-          ) : (
-            <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
-              {lastApiUrl}
-            </p>
-          )}
-        </div>
-      )}
-      <StationSearch onSelect={handleSelect} selectedStation={selectedStop?.name} />
 
-      {stationView && (
+      {/* Tab bar */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setActiveTab('search')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === 'search'
+              ? 'text-foreground border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Search className="h-4 w-4" />
+          Station
+        </button>
+        <button
+          onClick={() => setActiveTab('favorites')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === 'favorites'
+              ? 'text-foreground border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Star className="h-4 w-4" />
+          Favoriten
+        </button>
+      </div>
+
+      {activeTab === 'search' && (
         <>
-          <StatusBar
-            updatedAt={stationView.updatedAt}
-            refreshInterval={REFRESH_INTERVAL}
-            onRefresh={handleRefresh}
-          />
-          <AlertsSection alerts={stationView.alerts} />
+          {showDebugUrl && lastApiUrl && (
+            <div className="px-4 py-1.5 bg-muted/30 border-b border-border">
+              {lastApiUrl.startsWith('http') ? (
+                <a
+                  href={lastApiUrl.split(/\s+/)[0]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-mono text-primary underline break-all leading-tight block"
+                >
+                  {lastApiUrl}
+                </a>
+              ) : (
+                <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
+                  {lastApiUrl}
+                </p>
+              )}
+            </div>
+          )}
+          <StationSearch onSelect={handleSelect} selectedStation={selectedStop?.name} />
+
+          {stationView && (
+            <>
+              <StatusBar
+                updatedAt={stationView.updatedAt}
+                refreshInterval={REFRESH_INTERVAL}
+                onRefresh={handleRefresh}
+              />
+              <AlertsSection alerts={stationView.alerts} />
+            </>
+          )}
+
+          {loading && !stationView && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          )}
+
+          {error && (
+            <div className="px-4 py-3">
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            </div>
+          )}
+
+          {stationView && (
+            <div className="px-4 py-3 space-y-3 flex-1">
+              {stationView.lineGroups.length > 0 ? (
+                stationView.lineGroups.map((lg) => (
+                  <LineGroupCard
+                    key={`${lg.type}_${lg.name}`}
+                    lineGroup={lg}
+                    stationStopId={stationView.station.stopId}
+                    stationTitle={stationView.station.title}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8 text-sm">
+                  Keine Abfahrten verfügbar
+                </p>
+              )}
+
+              <div className="flex items-center gap-4 text-xs text-muted-foreground py-2">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-realtime))]" />
+                  Echtzeit
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-schedule))]" />
+                  Fahrplan
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!selectedStop && !loading && (
+            <div className="flex-1 flex items-center justify-center px-4">
+              <p className="text-muted-foreground text-sm text-center">
+                Gib eine Wiener-Linien-Station ein, um die nächsten Abfahrten zu sehen.
+              </p>
+            </div>
+          )}
         </>
       )}
 
-      {/* Loading state */}
-      {loading && !stationView && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div className="px-4 py-3">
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        </div>
-      )}
-
-      {/* Departures */}
-      {stationView && (
-        <div className="px-4 py-3 space-y-3 flex-1">
-          {stationView.lineGroups.length > 0 ? (
-            stationView.lineGroups.map((lg) => (
-              <LineGroupCard key={`${lg.type}_${lg.name}`} lineGroup={lg} />
-            ))
-          ) : (
-            <p className="text-center text-muted-foreground py-8 text-sm">
-              Keine Abfahrten verfügbar
-            </p>
-          )}
-
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground py-2">
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-realtime))]" />
-              Echtzeit
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-schedule))]" />
-              Fahrplan
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!selectedStop && !loading && (
-        <div className="flex-1 flex items-center justify-center px-4">
-          <p className="text-muted-foreground text-sm text-center">
-            Gib eine Wiener-Linien-Station ein, um die nächsten Abfahrten zu sehen.
-          </p>
-        </div>
-      )}
+      {activeTab === 'favorites' && <FavoritesView />}
     </div>
   );
 }
@@ -173,7 +208,9 @@ function MonitorApp() {
 export default function Index() {
   return (
     <DataProviderWrapper>
-      <MonitorApp />
+      <FavoritesProvider>
+        <MonitorApp />
+      </FavoritesProvider>
     </DataProviderWrapper>
   );
 }
