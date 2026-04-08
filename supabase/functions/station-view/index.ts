@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
         const dir = entry.directions.get(dirKey)!;
         for (const dep of line.departures?.departure ?? []) {
           const dt = dep.departureTime ?? {};
-          dir.departures.push({ countdown: dt.countdown ?? 0, timePlanned: dt.timePlanned ?? '', timeReal: dt.timeReal || undefined, isRealtime: !!dt.timeReal });
+          dir.departures.push({ countdown: dt.countdown ?? 0, timePlanned: dt.timePlanned ?? '', timeReal: dt.timeReal || undefined, isRealtime: !!dt.timeReal, isBarrierFree: dep.vehicle?.barrierFree ?? undefined });
         }
       }
 

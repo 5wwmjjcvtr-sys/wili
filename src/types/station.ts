@@ -10,6 +10,7 @@ export interface Departure {
   timePlanned: string;
   timeReal?: string;
   isRealtime: boolean;
+  isBarrierFree?: boolean;
 }
 
 export interface ScheduleBounds {

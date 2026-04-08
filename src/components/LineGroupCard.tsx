@@ -3,7 +3,6 @@ import { useFavorites } from '@/providers/FavoritesContext';
 import { getEffectiveDepCount } from '@/lib/favorites';
 import { DepartureRow } from './DepartureRow';
 import { FavoritesStar } from './FavoritesStar';
-import { Accessibility } from 'lucide-react';
 import { buildDirectionKey, Favorite } from '@/lib/favorites';
 
 interface Props {
@@ -99,9 +98,6 @@ export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props)
                 </span>
                 {dir.platform && (
                   <span className="text-xs text-muted-foreground">Steig {dir.platform}</span>
-                )}
-                {dir.isBarrierFree && (
-                  <Accessibility className="h-3.5 w-3.5 text-muted-foreground" aria-label="Barrierefrei" />
                 )}
                 {favorite && <FavoritesStar favorite={favorite} />}
               </div>

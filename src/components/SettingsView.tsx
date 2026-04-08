@@ -108,6 +108,21 @@ export function SettingsView() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Legend */}
+      <div className="pt-2 border-t border-border">
+        <Label className="text-sm">Legende</Label>
+        <div className="flex flex-col gap-2 mt-2">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-realtime))]" />
+            Echtzeit – Daten kommen live vom Fahrzeug
+          </span>
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-schedule))]" />
+            Fahrplan – planmäßige Abfahrtszeit
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

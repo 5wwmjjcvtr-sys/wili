@@ -210,18 +210,20 @@ export function FavoritesView() {
 
       {editMode && <ShareLinks />}
 
-      {/* Floating edit button - bottom right, above settings button */}
-      <button
-        onClick={() => setEditMode(!editMode)}
-        className={`fixed bottom-16 right-4 z-50 h-10 w-10 rounded-full shadow-lg flex items-center justify-center transition-colors ${
-          editMode
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-card text-muted-foreground hover:text-foreground border border-border'
-        }`}
-        aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
-      >
-        {editMode ? <Check className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
-      </button>
+      {/* Edit button at bottom of content */}
+      <div className="px-4 py-3 flex justify-end">
+        <button
+          onClick={() => setEditMode(!editMode)}
+          className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
+            editMode
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground border border-border'
+          }`}
+          aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
+        >
+          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }

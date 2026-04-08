@@ -72,6 +72,7 @@ export function normalizeMonitorResponse(
           timePlanned: dt.timePlanned ?? '',
           timeReal: dt.timeReal || undefined,
           isRealtime: !!dt.timeReal,
+          isBarrierFree: dep.vehicle?.barrierFree ?? undefined,
         };
         dirEntry.departures.push(departure);
       }
