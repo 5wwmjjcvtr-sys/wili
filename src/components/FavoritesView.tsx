@@ -205,6 +205,7 @@ export function FavoritesView() {
                 );
               })}
             </div>
+            </div>
           );
         })}
       </div>
