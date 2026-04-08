@@ -74,6 +74,9 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
     url.searchParams.set('r', String(container.prefs.refreshInterval));
   }
+  if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
+    url.searchParams.set('t', container.prefs.theme);
+  }
   return url.toString();
 }
 
