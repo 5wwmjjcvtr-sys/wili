@@ -4,6 +4,63 @@ const corsHeaders = {
 }
 
 const MONITOR_URL = 'https://www.wienerlinien.at/ogd_realtime/monitor';
+const HALTESTELLEN_CSV = 'https://data.wien.gv.at/csv/wienerlinien-ogd-haltestellen.csv';
+const STEIGE_CSV = 'https://data.wien.gv.at/csv/wienerlinien-ogd-steige.csv';
+
+// Cache: DIVA -> RBL numbers
+let divaToRbl: Map<string, string[]> | null = null;
+
+async function loadDivaToRbl(): Promise<Map<string, string[]>> {
+  if (divaToRbl) return divaToRbl;
+
+  // Load both CSVs in parallel
+  const [halteRes, steigeRes] = await Promise.all([
+    fetch(HALTESTELLEN_CSV),
+    fetch(STEIGE_CSV),
+  ]);
+  if (!halteRes.ok) throw new Error(`Haltestellen CSV: ${halteRes.status}`);
+  if (!steigeRes.ok) throw new Error(`Steige CSV: ${steigeRes.status}`);
+
+  const [halteText, steigeText] = await Promise.all([halteRes.text(), steigeRes.text()]);
+
+  // Build HALTESTELLEN_ID -> DIVA map
+  const haltIdToDiva = new Map<string, string>();
+  const halteLines = halteText.split('\n');
+  const halteHeader = halteLines[0].split(';').map(h => h.trim().replace(/"/g, ''));
+  const hIdIdx = halteHeader.findIndex(h => h === 'HALTESTELLEN_ID');
+  const divaIdx = halteHeader.findIndex(h => h === 'DIVA');
+  for (let i = 1; i < halteLines.length; i++) {
+    const cols = halteLines[i].split(';').map(c => c.trim().replace(/"/g, ''));
+    const hId = cols[hIdIdx >= 0 ? hIdIdx : 0];
+    const diva = cols[divaIdx >= 0 ? divaIdx : 2];
+    if (hId && diva) haltIdToDiva.set(hId, diva);
+  }
+
+  // Build DIVA -> RBL[] map from steige CSV
+  const result = new Map<string, string[]>();
+  const steigeLines = steigeText.split('\n');
+  const steigeHeader = steigeLines[0].split(';').map(h => h.trim().replace(/"/g, ''));
+  const fkHaltIdx = steigeHeader.findIndex(h => h === 'FK_HALTESTELLEN_ID');
+  const rblIdx = steigeHeader.findIndex(h => h === 'RBL_NUMMER');
+
+  const seenRbl = new Set<string>();
+  for (let i = 1; i < steigeLines.length; i++) {
+    const cols = steigeLines[i].split(';').map(c => c.trim().replace(/"/g, ''));
+    const fkHalt = cols[fkHaltIdx >= 0 ? fkHaltIdx : 2];
+    const rbl = cols[rblIdx >= 0 ? rblIdx : 5];
+    if (!fkHalt || !rbl) continue;
+    const diva = haltIdToDiva.get(fkHalt);
+    if (!diva) continue;
+    const key = `${diva}_${rbl}`;
+    if (seenRbl.has(key)) continue;
+    seenRbl.add(key);
+    if (!result.has(diva)) result.set(diva, []);
+    result.get(diva)!.push(rbl);
+  }
+
+  divaToRbl = result;
+  return result;
+}
 
 function vehicleTypeToLineType(type: string): string {
   if (type === 'ptMetro') return 'metro';
@@ -35,7 +92,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const url = `${MONITOR_URL}?stopId=${encodeURIComponent(stopId)}&activateTrafficInfo=stoerungkurz`;
+    // Map DIVA to RBL numbers
+    const mapping = await loadDivaToRbl();
+    const rblNumbers = mapping.get(stopId);
+    if (!rblNumbers || rblNumbers.length === 0) {
+      return new Response(JSON.stringify({
+        mode: 'proxy',
+        updatedAt: new Date().toISOString(),
+        station: { stopId, title: '' },
+        alerts: [],
+        lineGroups: [],
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Build URL with multiple stopId params (RBL numbers)
+    const params = rblNumbers.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
+    const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Monitor API: ${res.status}`);
     const data = await res.json();
