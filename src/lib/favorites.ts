@@ -113,6 +113,8 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
       d: f.direction,
       c: f.canonicalToward,
       t: f.transportType,
+      o: f.stationOrder,
+      i: f.itemOrder,
       ...(f.platform ? { p: f.platform } : {}),
     })),
     ...(Object.keys(container.prefs).length > 0 ? {
