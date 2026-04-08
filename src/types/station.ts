@@ -12,12 +12,18 @@ export interface Departure {
   isRealtime: boolean;
 }
 
+export interface ScheduleBounds {
+  firstDeparturePlanned: string; // "HH:MM"
+  lastDeparturePlanned: string;  // "HH:MM"
+}
+
 export interface Direction {
   directionId: string;
   towards: string;
   platform?: string;
   isBarrierFree: boolean;
   departures: Departure[];
+  scheduleBounds?: ScheduleBounds;
 }
 
 export interface LineGroup {
