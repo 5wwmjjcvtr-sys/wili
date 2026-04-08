@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export function SettingsView() {
   const { mode, setMode, showDebugUrl, setShowDebugUrl } = useDataProvider();
-  const { prefs, setDepCount } = useFavorites();
+  const { prefs, setDepCount, setRefreshInterval } = useFavorites();
   const depCount = prefs.depCount ?? 3;
+  const refreshSec = prefs.refreshInterval ?? 30;
 
   return (
     <div className="flex-1 px-4 py-4 space-y-6">
