@@ -193,6 +193,10 @@ export function getEffectiveMode(prefs: FavoritesPrefs): 'direct' | 'proxy' {
   return prefs.mode ?? DEFAULTS.mode;
 }
 
+export function getEffectiveRefreshInterval(prefs: FavoritesPrefs): number {
+  return prefs.refreshInterval ?? DEFAULTS.refreshInterval;
+}
+
 // Check if a departure is a short turn (towards differs from canonical)
 export function isShortTurn(towards: string, canonicalToward: string): boolean {
   if (!canonicalToward || !towards) return false;
