@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFavorites } from '@/providers/FavoritesContext';
 import { useDataProvider } from '@/providers/ProviderContext';
-import { Favorite, isShortTurn, getEffectiveDepCount, getEffectiveRefreshInterval } from '@/lib/favorites';
+import { Favorite, getEffectiveDepCount, getEffectiveRefreshInterval } from '@/lib/favorites';
 import { StationView, LineGroup, Direction, ScheduleBounds } from '@/types/station';
 import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
@@ -251,7 +251,8 @@ function findMatchingDepartures(
 ): MatchedDeparture[] {
   if (!view) return [];
 
-  const results: MatchedDeparture[] = [];
+  // First: collect only departures from the exact canonical direction
+  const canonical: MatchedDeparture[] = [];
 
   for (const lg of view.lineGroups) {
     if (lg.name !== fav.lineName) continue;
@@ -259,20 +260,20 @@ function findMatchingDepartures(
     for (const dir of lg.directions) {
       if (dir.directionId !== fav.richtungsId) continue;
 
-      const short = isShortTurn(dir.towards, fav.canonicalToward);
+      // Only match the exact towards destination
+      if (dir.towards.trim().toLowerCase() !== fav.canonicalToward.trim().toLowerCase()) continue;
 
       for (const dep of dir.departures) {
-        results.push({
+        canonical.push({
           departure: dep,
-          isShort: short,
-          towards: short ? dir.towards : undefined,
+          isShort: false,
         });
       }
     }
   }
 
-  results.sort((a, b) => a.departure.countdown - b.departure.countdown);
-  return results.slice(0, depCount);
+  canonical.sort((a, b) => a.departure.countdown - b.departure.countdown);
+  return canonical.slice(0, depCount);
 }
 
 function findScheduleBounds(
@@ -285,6 +286,7 @@ function findScheduleBounds(
     if (lg.name !== fav.lineName) continue;
     for (const dir of lg.directions) {
       if (dir.directionId !== fav.richtungsId) continue;
+      if (dir.towards.trim().toLowerCase() !== fav.canonicalToward.trim().toLowerCase()) continue;
       if (dir.scheduleBounds) return dir.scheduleBounds;
     }
   }
