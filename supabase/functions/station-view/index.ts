@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     for (const [, e] of lineMap) {
       for (const [, d] of e.directions) {
         d.departures.sort((a: any, b: any) => a.countdown - b.countdown);
-        d.departures = d.departures.slice(0, 3);
+        d.departures = d.departures.slice(0, 10);
       }
     }
 

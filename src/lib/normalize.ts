@@ -102,7 +102,7 @@ export function normalizeMonitorResponse(
   for (const [, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
       dir.departures.sort((a, b) => a.countdown - b.countdown);
-      dir.departures = dir.departures.slice(0, 3);
+      dir.departures = dir.departures.slice(0, 10);
     }
   }
 

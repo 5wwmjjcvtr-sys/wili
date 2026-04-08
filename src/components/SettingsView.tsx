@@ -41,7 +41,7 @@ export function SettingsView() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[10, 15, 20, 30, 45, 60, 90, 120].map(n => (
+            {[5, 10, 15, 20, 30, 45, 60, 90, 120].map(n => (
               <SelectItem key={n} value={String(n)}>{n}s</SelectItem>
             ))}
           </SelectContent>

@@ -1,4 +1,6 @@
 import { LineGroup, LineType, Direction } from '@/types/station';
+import { useFavorites } from '@/providers/FavoritesContext';
+import { getEffectiveDepCount } from '@/lib/favorites';
 import { DepartureRow } from './DepartureRow';
 import { FavoritesStar } from './FavoritesStar';
 import { Accessibility } from 'lucide-react';
@@ -69,6 +71,8 @@ function buildFavoriteFromDirection(
 
 export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props) {
   const badgeStyle = getLineBadgeStyle(lineGroup);
+  const { prefs } = useFavorites();
+  const depCount = getEffectiveDepCount(prefs);
 
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -103,7 +107,7 @@ export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props)
               </div>
               {dir.departures.length > 0 ? (
                 <div className="space-y-1">
-                  {dir.departures.map((dep, i) => (
+                  {dir.departures.slice(0, depCount).map((dep, i) => (
                     <DepartureRow key={i} departure={dep} />
                   ))}
                 </div>
