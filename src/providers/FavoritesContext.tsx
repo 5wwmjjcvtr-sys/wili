@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
-  toReadableUrl, toEncodedUrl, buildDirectionKey,
+  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
