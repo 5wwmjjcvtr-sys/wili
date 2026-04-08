@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
-  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval,
+  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval, getEffectiveTheme,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
