@@ -6,6 +6,7 @@ import { StationView, LineGroup, Direction } from '@/types/station';
 import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
+import { StatusBar } from './StatusBar';
 import { Star, RefreshCw, Trash2, ChevronUp, ChevronDown, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
