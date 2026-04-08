@@ -111,11 +111,6 @@ export function FavoritesView() {
         </div>
       )}
 
-      {loading && stationViews.size === 0 && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-        </div>
-      )}
 
       <div className="px-4 py-3 space-y-5">
         {stationEntries.map(([stopId, favs], stationIdx) => {
