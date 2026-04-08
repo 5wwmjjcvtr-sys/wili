@@ -7,13 +7,14 @@ import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
 import { LineGroupCard } from '@/components/LineGroupCard';
 import { FavoritesView } from '@/components/FavoritesView';
+import { SettingsView } from '@/components/SettingsView';
 import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
-import { Star, Search } from 'lucide-react';
+import { Star, Search, Settings } from 'lucide-react';
 
 const REFRESH_INTERVAL = 30;
 
-type AppTab = 'search' | 'favorites';
+type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
