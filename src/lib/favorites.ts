@@ -70,6 +70,9 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.mode && container.prefs.mode !== DEFAULTS.mode) {
     url.searchParams.set('m', container.prefs.mode);
   }
+  if (container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
+    url.searchParams.set('r', String(container.prefs.refreshInterval));
+  }
   return url.toString();
 }
 
