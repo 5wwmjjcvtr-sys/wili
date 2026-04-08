@@ -203,6 +203,10 @@ export function getEffectiveRefreshInterval(prefs: FavoritesPrefs): number {
   return prefs.refreshInterval ?? DEFAULTS.refreshInterval;
 }
 
+export function getEffectiveTheme(prefs: FavoritesPrefs): 'light' | 'dark' | 'system' {
+  return prefs.theme ?? DEFAULTS.theme;
+}
+
 // Check if a departure is a short turn (towards differs from canonical)
 export function isShortTurn(towards: string, canonicalToward: string): boolean {
   if (!canonicalToward || !towards) return false;
