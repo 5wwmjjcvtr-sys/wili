@@ -1,4 +1,6 @@
 import { LineGroup, LineType, Direction } from '@/types/station';
+import { useFavorites } from '@/providers/FavoritesContext';
+import { getEffectiveDepCount } from '@/lib/favorites';
 import { DepartureRow } from './DepartureRow';
 import { FavoritesStar } from './FavoritesStar';
 import { Accessibility } from 'lucide-react';
