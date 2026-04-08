@@ -120,6 +120,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (r) prefs.refreshInterval = parseInt(r, 10);
   const t = url.searchParams.get('t');
   if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
+  if (url.searchParams.get('sf') === '0') prefs.showFirstDep = false;
+  if (url.searchParams.get('sl') === '0') prefs.showLastDep = false;
 
   return { v: 1, favorites, prefs };
 }
