@@ -17,6 +17,8 @@ interface FavoritesContextValue {
   setDepCount: (n: number) => void;
   setRefreshInterval: (n: number) => void;
   setThemePref: (t: 'light' | 'dark' | 'system') => void;
+  setShowFirstDep: (v: boolean) => void;
+  setShowLastDep: (v: boolean) => void;
   refreshInterval: number;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
