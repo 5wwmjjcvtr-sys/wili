@@ -58,6 +58,7 @@ export function FavoritesView() {
         newMap.set(stopId, view);
       }
       setStationViews(newMap);
+      setUpdatedAt(new Date().toISOString());
     } catch (e: any) {
       setError(e.message || 'Fehler beim Laden');
     } finally {
