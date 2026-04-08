@@ -13,6 +13,7 @@ interface FavoritesContextValue {
   removeFavorite: (directionKey: string) => void;
   moveStation: (stopId: string, direction: 'up' | 'down') => void;
   moveItem: (directionKey: string, direction: 'up' | 'down') => void;
+  setDepCount: (n: number) => void;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
