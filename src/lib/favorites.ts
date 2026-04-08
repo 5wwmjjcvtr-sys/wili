@@ -76,12 +76,12 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   const favParams = url.searchParams.getAll('fav');
   if (favParams.length === 0) return null;
 
-  const favorites: Favorite[] = favParams.map(param => {
+  const favorites: Favorite[] = favParams.map((param, index) => {
     const parts = param.split(':');
-    const [stopId, lineName, richtungsId, direction, canonicalToward, transportType, platform] = parts;
+    const [stopId, lineName, richtungsId, direction, canonicalToward, transportType, stationOrderStr, itemOrderStr, platform] = parts;
     return {
       stopId,
-      stationTitle: '', // not stored in readable URL
+      stationTitle: '',
       lineName,
       transportType: (transportType || 'bus') as LineType,
       richtungsId,
@@ -90,6 +90,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
       canonicalToward,
       platform: platform || undefined,
       allowShortTurns: true,
+      stationOrder: parseInt(stationOrderStr, 10) || index,
+      itemOrder: parseInt(itemOrderStr, 10) || index,
     };
   });
 
