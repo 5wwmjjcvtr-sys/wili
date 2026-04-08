@@ -28,7 +28,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct' };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30 };
 
 // ─── LocalStorage ───
 
