@@ -41,6 +41,16 @@ export interface Alert {
   type: 'local' | 'network';
 }
 
+export interface ElevatorMessage {
+  title: string;
+  description: string;
+}
+
+export interface StationInfrastructure {
+  hasElevatorIssue: boolean;
+  elevatorMessages: ElevatorMessage[];
+}
+
 export interface StationView {
   mode: 'direct' | 'proxy';
   updatedAt: string;
@@ -50,4 +60,5 @@ export interface StationView {
   };
   alerts: Alert[];
   lineGroups: LineGroup[];
+  stationInfrastructure?: StationInfrastructure;
 }

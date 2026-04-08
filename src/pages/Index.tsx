@@ -34,7 +34,7 @@ function MonitorApp() {
         const rbls = rblMap.get(stopId) ?? [];
         if (rbls.length > 0) {
           const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
-          setLastApiUrl(`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz`);
+          setLastApiUrl(`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`);
         } else {
           setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
         }
@@ -150,6 +150,14 @@ function MonitorApp() {
                 refreshInterval={refreshInterval}
                 onRefresh={handleRefresh}
               />
+              {stationView.stationInfrastructure?.hasElevatorIssue && (
+                <div className="px-4 py-1.5">
+                  <div className="flex items-center gap-2 rounded-md border border-[hsl(var(--wl-alert)/0.4)] bg-[hsl(var(--wl-alert)/0.08)] px-3 py-2">
+                    <span className="text-base">🛗</span>
+                    <span className="text-sm font-medium text-foreground">Aufzugsstörung</span>
+                  </div>
+                </div>
+              )}
               <AlertsSection alerts={stationView.alerts} />
             </>
           )}

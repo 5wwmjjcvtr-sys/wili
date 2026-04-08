@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
 
     // Build URL with multiple stopId params (RBL numbers)
     const params = rblNumbers.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
-    const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz`;
+    const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`;
     const res = await fetchWithRetry(url);
     if (!res.ok) throw new Error(`Monitor API: ${res.status}`);
     const data = await res.json();
@@ -178,6 +178,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Parse elevator infos from trafficInfos
+    const elevatorMessages: Array<{ title: string; description: string }> = [];
+    for (const monitor of monitors) {
+      for (const info of monitor?.trafficInfos ?? []) {
+        const infoName = (info?.name ?? '').toLowerCase();
+        const infoTitle = (info?.title ?? '').toLowerCase();
+        if (
+          infoName.includes('aufzug') ||
+          infoTitle.includes('aufzug') ||
+          String(info?.trafficInfoCategoryId ?? '') === '8'
+        ) {
+          elevatorMessages.push({
+            title: info.title ?? info.name ?? 'Aufzugsstörung',
+            description: info.description ?? '',
+          });
+        }
+      }
+    }
+
     for (const [, e] of lineMap) {
       for (const [, d] of e.directions) {
         d.departures.sort((a: any, b: any) => a.countdown - b.countdown);
@@ -195,6 +214,10 @@ Deno.serve(async (req) => {
       station: { stopId, title: stationTitle },
       alerts: Array.from(alertsMap.values()),
       lineGroups,
+      stationInfrastructure: {
+        hasElevatorIssue: elevatorMessages.length > 0,
+        elevatorMessages,
+      },
     };
 
     return new Response(JSON.stringify(result), {

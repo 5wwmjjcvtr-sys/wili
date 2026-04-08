@@ -123,6 +123,9 @@ export function FavoritesView() {
                   </div>
                 )}
                 <h3 className="text-base font-semibold text-foreground">{stationTitle}</h3>
+                {view?.stationInfrastructure?.hasElevatorIssue && (
+                  <span className="text-base" title="Aufzugsstörung">🛗</span>
+                )}
               </div>
               {favs.map((fav, itemIdx) => {
                 const lineBadgeStyle = fav.transportType === 'metro' && UBAHN_COLORS[fav.lineName]
