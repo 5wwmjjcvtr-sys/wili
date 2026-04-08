@@ -69,14 +69,7 @@ export function FavoritesView() {
   }, [loadFavorites]);
 
   if (favorites.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-3">
-        <Star className="h-8 w-8 text-muted-foreground" />
-        <p className="text-muted-foreground text-sm text-center">
-          Noch keine Favoriten gesetzt. Wähle eine Station und tippe auf den Stern neben einer Richtung.
-        </p>
-      </div>
-    );
+    return <div className="flex-1" />;
   }
 
   const sortedFavorites = [...favorites].sort((a, b) => a.stationOrder - b.stationOrder || a.itemOrder - b.itemOrder);
