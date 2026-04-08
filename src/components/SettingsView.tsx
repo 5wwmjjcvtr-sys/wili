@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export function SettingsView() {
   const { mode, setMode, showDebugUrl, setShowDebugUrl } = useDataProvider();
-  const { prefs, setDepCount, setRefreshInterval } = useFavorites();
+  const { prefs, setDepCount, setRefreshInterval, setThemePref } = useFavorites();
   const depCount = prefs.depCount ?? 3;
   const refreshSec = prefs.refreshInterval ?? 30;
+  const theme = prefs.theme ?? 'system';
 
   return (
     <div className="flex-1 px-4 py-4 space-y-6">
