@@ -265,3 +265,19 @@ function findMatchingDepartures(
   results.sort((a, b) => a.departure.countdown - b.departure.countdown);
   return results.slice(0, depCount);
 }
+
+function findScheduleBounds(
+  view: StationView | undefined,
+  fav: Favorite
+): ScheduleBounds | undefined {
+  if (!view) return undefined;
+
+  for (const lg of view.lineGroups) {
+    if (lg.name !== fav.lineName) continue;
+    for (const dir of lg.directions) {
+      if (dir.directionId !== fav.richtungsId) continue;
+      if (dir.scheduleBounds) return dir.scheduleBounds;
+    }
+  }
+  return undefined;
+}
