@@ -104,6 +104,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (n) prefs.depCount = parseInt(n, 10);
   const m = url.searchParams.get('m');
   if (m === 'direct' || m === 'proxy') prefs.mode = m;
+  const r = url.searchParams.get('r');
+  if (r) prefs.refreshInterval = parseInt(r, 10);
 
   return { v: 1, favorites, prefs };
 }
