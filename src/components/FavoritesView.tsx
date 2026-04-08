@@ -33,14 +33,12 @@ export function FavoritesView() {
     setLoading(true);
     setError(null);
 
-    // Group by stopId
     const stopIds = [...new Set(favorites.map(f => f.stopId))];
 
     try {
       const results = await Promise.all(
         stopIds.map(async (stopId) => {
           const view = await provider.getStationView(stopId);
-          // Fetch schedule bounds if not cached
           if (!boundsCache.current.has(stopId)) {
             try {
               const bounds = await fetchScheduleBounds(stopId);
@@ -81,8 +79,6 @@ export function FavoritesView() {
     );
   }
 
-  // Group favorites by station, sorted by stationOrder then itemOrder
-  // Normalize: ensure unique orders so swapping works
   const sortedFavorites = [...favorites].sort((a, b) => a.stationOrder - b.stationOrder || a.itemOrder - b.itemOrder);
   const groupedByStation = new Map<string, Favorite[]>();
   for (const fav of sortedFavorites) {
@@ -94,12 +90,7 @@ export function FavoritesView() {
   const stationEntries = Array.from(groupedByStation.entries());
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditMode(!editMode)}>
-          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-        </Button>
-      </div>
+    <div className="flex-1 flex flex-col relative">
       {!editMode && (
         <StatusBar
           updatedAt={updatedAt}
@@ -115,7 +106,6 @@ export function FavoritesView() {
           </div>
         </div>
       )}
-
 
       <div className="px-4 py-3 space-y-5">
         {stationEntries.map(([stopId, favs], stationIdx) => {
@@ -211,6 +201,19 @@ export function FavoritesView() {
       </div>
 
       {editMode && <ShareLinks />}
+
+      {/* Floating edit button - bottom right, above settings button */}
+      <button
+        onClick={() => setEditMode(!editMode)}
+        className={`fixed bottom-16 right-4 z-50 h-10 w-10 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+          editMode
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-card text-muted-foreground hover:text-foreground border border-border'
+        }`}
+        aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
+      >
+        {editMode ? <Check className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+      </button>
     </div>
   );
 }
@@ -234,7 +237,6 @@ function findMatchingDepartures(
     if (lg.name !== fav.lineName) continue;
 
     for (const dir of lg.directions) {
-      // Match by directionId (Grundrichtung)
       if (dir.directionId !== fav.richtungsId) continue;
 
       const short = isShortTurn(dir.towards, fav.canonicalToward);
@@ -249,7 +251,6 @@ function findMatchingDepartures(
     }
   }
 
-  // Sort by countdown and limit
   results.sort((a, b) => a.departure.countdown - b.departure.countdown);
   return results.slice(0, depCount);
 }
