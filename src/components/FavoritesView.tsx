@@ -16,7 +16,7 @@ const UBAHN_COLORS: Record<string, string> = {
   U4: '#00A651', U5: '#A6C73A', U6: '#A8743A',
 };
 
-export function FavoritesView() {
+export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
   const { provider } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
