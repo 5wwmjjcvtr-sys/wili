@@ -79,6 +79,12 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
     url.searchParams.set('t', container.prefs.theme);
   }
+  if (container.prefs.showFirstDep === false) {
+    url.searchParams.set('sf', '0');
+  }
+  if (container.prefs.showLastDep === false) {
+    url.searchParams.set('sl', '0');
+  }
   return url.toString();
 }
 
