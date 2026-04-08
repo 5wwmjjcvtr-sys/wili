@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFavorites } from '@/providers/FavoritesContext';
 import { useDataProvider } from '@/providers/ProviderContext';
 import { Favorite, isShortTurn, getEffectiveDepCount, getEffectiveRefreshInterval } from '@/lib/favorites';
-import { StationView, LineGroup, Direction } from '@/types/station';
+import { StationView, LineGroup, Direction, ScheduleBounds } from '@/types/station';
 import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
