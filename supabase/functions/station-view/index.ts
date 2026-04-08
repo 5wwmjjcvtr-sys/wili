@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
 
     // Build URL with multiple stopId params (RBL numbers)
     const params = rblNumbers.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
-    const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz`;
+    const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`;
     const res = await fetchWithRetry(url);
     if (!res.ok) throw new Error(`Monitor API: ${res.status}`);
     const data = await res.json();
