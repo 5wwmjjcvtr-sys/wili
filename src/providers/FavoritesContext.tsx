@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
-  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval,
+  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval, getEffectiveTheme,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
@@ -15,6 +16,7 @@ interface FavoritesContextValue {
   moveItem: (directionKey: string, direction: 'up' | 'down') => void;
   setDepCount: (n: number) => void;
   setRefreshInterval: (n: number) => void;
+  setThemePref: (t: 'light' | 'dark' | 'system') => void;
   refreshInterval: number;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
@@ -132,6 +134,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, refreshInterval: n } }));
   }, []);
 
+  const { setTheme } = useTheme();
+
+  const setThemePref = useCallback((t: 'light' | 'dark' | 'system') => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, theme: t } }));
+    setTheme(t);
+  }, [setTheme]);
+
+  // Sync theme on mount
+  useEffect(() => {
+    const theme = getEffectiveTheme(container.prefs);
+    setTheme(theme);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
     return toReadableUrl(container, base);
@@ -155,6 +170,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       moveItem,
       setDepCount,
       setRefreshInterval,
+      setThemePref,
       refreshInterval,
       generateReadableUrl,
       generateEncodedUrl,

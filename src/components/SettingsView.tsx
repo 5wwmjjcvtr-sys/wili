@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export function SettingsView() {
   const { mode, setMode, showDebugUrl, setShowDebugUrl } = useDataProvider();
-  const { prefs, setDepCount, setRefreshInterval } = useFavorites();
+  const { prefs, setDepCount, setRefreshInterval, setThemePref } = useFavorites();
   const depCount = prefs.depCount ?? 3;
   const refreshSec = prefs.refreshInterval ?? 30;
+  const theme = prefs.theme ?? 'system';
 
   return (
     <div className="flex-1 px-4 py-4 space-y-6">
@@ -70,6 +71,24 @@ export function SettingsView() {
           <p className="text-xs text-muted-foreground">Zeigt den HTTP-Link der API-Abfrage</p>
         </div>
         <Switch id="debug-url" checked={showDebugUrl} onCheckedChange={setShowDebugUrl} />
+      </div>
+
+      {/* Theme */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="text-sm">Darstellung</Label>
+          <p className="text-xs text-muted-foreground">Hell, Dunkel oder Systemeinstellung</p>
+        </div>
+        <Select value={theme} onValueChange={(v) => setThemePref(v as 'light' | 'dark' | 'system')}>
+          <SelectTrigger className="w-28 h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="system">System</SelectItem>
+            <SelectItem value="light">Hell</SelectItem>
+            <SelectItem value="dark">Dunkel</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

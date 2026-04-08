@@ -19,6 +19,7 @@ export interface FavoritesPrefs {
   depCount?: number; // default 3
   mode?: 'direct' | 'proxy'; // default 'direct'
   refreshInterval?: number; // default 30
+  theme?: 'light' | 'dark' | 'system'; // default 'system'
 }
 
 export interface FavoritesContainer {
@@ -28,7 +29,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30 };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system' };
 
 // ─── LocalStorage ───
 
@@ -73,6 +74,9 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
     url.searchParams.set('r', String(container.prefs.refreshInterval));
   }
+  if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
+    url.searchParams.set('t', container.prefs.theme);
+  }
   return url.toString();
 }
 
@@ -106,6 +110,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (m === 'direct' || m === 'proxy') prefs.mode = m;
   const r = url.searchParams.get('r');
   if (r) prefs.refreshInterval = parseInt(r, 10);
+  const t = url.searchParams.get('t');
+  if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
 
   return { v: 1, favorites, prefs };
 }
@@ -130,6 +136,7 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
         ...(container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount ? { n: container.prefs.depCount } : {}),
         ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
         ...(container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
+        ...(container.prefs.theme && container.prefs.theme !== DEFAULTS.theme ? { t: container.prefs.theme } : {}),
       }
     } : {}),
   };
@@ -173,6 +180,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     if (compact.p?.n) prefs.depCount = compact.p.n;
     if (compact.p?.m) prefs.mode = compact.p.m;
     if (compact.p?.r) prefs.refreshInterval = compact.p.r;
+    if (compact.p?.t) prefs.theme = compact.p.t;
 
     return { v: 1, favorites, prefs };
   } catch {
@@ -195,6 +203,10 @@ export function getEffectiveMode(prefs: FavoritesPrefs): 'direct' | 'proxy' {
 
 export function getEffectiveRefreshInterval(prefs: FavoritesPrefs): number {
   return prefs.refreshInterval ?? DEFAULTS.refreshInterval;
+}
+
+export function getEffectiveTheme(prefs: FavoritesPrefs): 'light' | 'dark' | 'system' {
+  return prefs.theme ?? DEFAULTS.theme;
 }
 
 // Check if a departure is a short turn (towards differs from canonical)
