@@ -14,6 +14,8 @@ interface FavoritesContextValue {
   moveStation: (stopId: string, direction: 'up' | 'down') => void;
   moveItem: (directionKey: string, direction: 'up' | 'down') => void;
   setDepCount: (n: number) => void;
+  setRefreshInterval: (n: number) => void;
+  refreshInterval: number;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
