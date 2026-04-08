@@ -11,6 +11,8 @@ interface FavoritesContextValue {
   isFavorite: (directionKey: string) => boolean;
   toggleFavorite: (fav: Favorite) => void;
   removeFavorite: (directionKey: string) => void;
+  moveStation: (stopId: string, direction: 'up' | 'down') => void;
+  moveItem: (directionKey: string, direction: 'up' | 'down') => void;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
