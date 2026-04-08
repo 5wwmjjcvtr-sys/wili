@@ -122,6 +122,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       };
     });
   }, []);
+  const setDepCount = useCallback((n: number) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, depCount: n } }));
+  }, []);
 
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
@@ -142,6 +145,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       removeFavorite,
       moveStation,
       moveItem,
+      setDepCount,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,
