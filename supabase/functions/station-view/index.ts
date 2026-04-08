@@ -148,23 +148,30 @@ Deno.serve(async (req) => {
 
       for (const line of monitor?.lines ?? []) {
         const lineName = line.name ?? '';
-        const towards = line.towards ?? '';
-        const directionId = line.direction ?? '';
-        const platform = line.platform ?? '';
+        const fallbackTowards = line.towards ?? '';
+        const fallbackDirectionId = line.direction ?? '';
+        const fallbackPlatform = line.platform ?? '';
         const barrierFree = line.barrierFree ?? false;
         const vType = line.departures?.departure?.[0]?.vehicle?.type ?? '';
         const lineType = parseLineType(lineName, vType || undefined);
 
         if (!lineMap.has(lineName)) lineMap.set(lineName, { type: lineType, directions: new Map() });
         const entry = lineMap.get(lineName)!;
-        const dirKey = `${directionId}_${towards}`;
-        if (!entry.directions.has(dirKey)) {
-          entry.directions.set(dirKey, { directionId, towards, platform: platform || undefined, isBarrierFree: barrierFree, departures: [] });
-        }
-        const dir = entry.directions.get(dirKey)!;
+
         for (const dep of line.departures?.departure ?? []) {
           const dt = dep.departureTime ?? {};
-          dir.departures.push({ countdown: dt.countdown ?? 0, timePlanned: dt.timePlanned ?? '', timeReal: dt.timeReal || undefined, isRealtime: !!dt.timeReal, isBarrierFree: dep.vehicle?.barrierFree ?? undefined });
+          const vehicle = dep.vehicle ?? {};
+          const directionId = vehicle.direction ?? fallbackDirectionId;
+          const towards = vehicle.towards ?? fallbackTowards;
+          const platform = vehicle.platform ?? fallbackPlatform;
+          const dirKey = `${directionId}_${towards}`;
+
+          if (!entry.directions.has(dirKey)) {
+            entry.directions.set(dirKey, { directionId, towards, platform: platform || undefined, isBarrierFree: barrierFree, departures: [] });
+          }
+
+          const dir = entry.directions.get(dirKey)!;
+          dir.departures.push({ countdown: dt.countdown ?? 0, timePlanned: dt.timePlanned ?? '', timeReal: dt.timeReal || undefined, isRealtime: !!dt.timeReal, isBarrierFree: vehicle?.barrierFree ?? undefined });
         }
       }
 
