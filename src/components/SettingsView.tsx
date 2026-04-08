@@ -72,6 +72,24 @@ export function SettingsView() {
         </div>
         <Switch id="debug-url" checked={showDebugUrl} onCheckedChange={setShowDebugUrl} />
       </div>
+
+      {/* Theme */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="text-sm">Darstellung</Label>
+          <p className="text-xs text-muted-foreground">Hell, Dunkel oder Systemeinstellung</p>
+        </div>
+        <Select value={theme} onValueChange={(v) => setThemePref(v as 'light' | 'dark' | 'system')}>
+          <SelectTrigger className="w-28 h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="system">System</SelectItem>
+            <SelectItem value="light">Hell</SelectItem>
+            <SelectItem value="dark">Dunkel</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
