@@ -188,6 +188,19 @@ function MonitorApp() {
 
       {activeTab === 'favorites' && <FavoritesView />}
       {activeTab === 'settings' && <SettingsView />}
+
+      {/* Settings button at bottom right - only on search and favorites tabs */}
+      {activeTab !== 'settings' && (
+        <div className="px-4 py-3 flex justify-end">
+          <button
+            onClick={() => setActiveTab('settings')}
+            className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
+            aria-label="Einstellungen"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
