@@ -112,6 +112,17 @@ function MonitorApp() {
           <Star className="h-4 w-4" />
           Favoriten
         </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === 'settings'
+              ? 'text-foreground border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Settings className="h-4 w-4" />
+          Einstellungen
+        </button>
       </div>
 
       {activeTab === 'search' && (
