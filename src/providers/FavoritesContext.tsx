@@ -11,6 +11,8 @@ interface FavoritesContextValue {
   isFavorite: (directionKey: string) => boolean;
   toggleFavorite: (fav: Favorite) => void;
   removeFavorite: (directionKey: string) => void;
+  moveStation: (stopId: string, direction: 'up' | 'down') => void;
+  moveItem: (directionKey: string, direction: 'up' | 'down') => void;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
@@ -60,6 +62,54 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const moveStation = useCallback((stopId: string, direction: 'up' | 'down') => {
+    setContainer(prev => {
+      // Get unique station orders sorted
+      const stationOrders = [...new Set(prev.favorites.map(f => f.stopId))]
+        .map(sid => ({ stopId: sid, order: prev.favorites.find(f => f.stopId === sid)!.stationOrder }))
+        .sort((a, b) => a.order - b.order);
+      const idx = stationOrders.findIndex(s => s.stopId === stopId);
+      if (idx < 0) return prev;
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= stationOrders.length) return prev;
+      const orderA = stationOrders[idx].order;
+      const orderB = stationOrders[swapIdx].order;
+      const swapStopId = stationOrders[swapIdx].stopId;
+      return {
+        ...prev,
+        favorites: prev.favorites.map(f => {
+          if (f.stopId === stopId) return { ...f, stationOrder: orderB };
+          if (f.stopId === swapStopId) return { ...f, stationOrder: orderA };
+          return f;
+        }),
+      };
+    });
+  }, []);
+
+  const moveItem = useCallback((directionKey: string, direction: 'up' | 'down') => {
+    setContainer(prev => {
+      const fav = prev.favorites.find(f => f.directionKey === directionKey);
+      if (!fav) return prev;
+      const sameStop = prev.favorites
+        .filter(f => f.stopId === fav.stopId)
+        .sort((a, b) => a.itemOrder - b.itemOrder);
+      const idx = sameStop.findIndex(f => f.directionKey === directionKey);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= sameStop.length) return prev;
+      const orderA = sameStop[idx].itemOrder;
+      const orderB = sameStop[swapIdx].itemOrder;
+      const swapKey = sameStop[swapIdx].directionKey;
+      return {
+        ...prev,
+        favorites: prev.favorites.map(f => {
+          if (f.directionKey === directionKey) return { ...f, itemOrder: orderB };
+          if (f.directionKey === swapKey) return { ...f, itemOrder: orderA };
+          return f;
+        }),
+      };
+    });
+  }, []);
+
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
     return toReadableUrl(container, base);
@@ -77,6 +127,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       isFavorite,
       toggleFavorite,
       removeFavorite,
+      moveStation,
+      moveItem,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,
