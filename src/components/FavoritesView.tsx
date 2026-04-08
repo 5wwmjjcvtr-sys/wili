@@ -117,13 +117,15 @@ export function FavoritesView() {
         </div>
       )}
 
-      <div className="px-4 py-3 space-y-3">
+      <div className="px-4 py-3 space-y-5">
         {stationEntries.map(([stopId, favs], stationIdx) => {
           const view = stationViews.get(stopId);
           const stationTitle = favs[0]?.stationTitle || view?.station?.title || stopId;
 
           return (
-            <div key={stopId} className="space-y-2">
+            <div key={stopId}>
+              {stationIdx > 0 && <Separator className="mb-5" />}
+              <div className="space-y-2">
               <div className="flex items-center gap-1">
                 {editMode && (
                   <div className="flex flex-col">
@@ -137,7 +139,7 @@ export function FavoritesView() {
                     </button>
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-foreground">{stationTitle}</h3>
+                <h3 className="text-base font-semibold text-foreground">{stationTitle}</h3>
               </div>
               {favs.map((fav, itemIdx) => {
                 const lineBadgeStyle = fav.transportType === 'metro' && UBAHN_COLORS[fav.lineName]
