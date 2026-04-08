@@ -114,10 +114,14 @@ export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props)
               ) : (
                 <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
               )}
-              {dir.scheduleBounds && (
+              {dir.scheduleBounds && (prefs.showFirstDep !== false || prefs.showLastDep !== false) && (
                 <div className="flex gap-4 mt-1.5 pt-1.5 border-t border-border/50 text-xs text-muted-foreground">
-                  <span>Erste Fahrt: <span className="font-mono">{dir.scheduleBounds.firstDeparturePlanned || '–'}</span></span>
-                  <span>Letzte Fahrt: <span className="font-mono">{dir.scheduleBounds.lastDeparturePlanned || '–'}</span></span>
+                  {prefs.showFirstDep !== false && (
+                    <span>Erste Fahrt: <span className="font-mono">{dir.scheduleBounds.firstDeparturePlanned || '–'}</span></span>
+                  )}
+                  {prefs.showLastDep !== false && (
+                    <span>Letzte Fahrt: <span className="font-mono">{dir.scheduleBounds.lastDeparturePlanned || '–'}</span></span>
+                  )}
                 </div>
               )}
             </div>

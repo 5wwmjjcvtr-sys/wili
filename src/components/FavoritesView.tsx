@@ -191,10 +191,14 @@ export function FavoritesView() {
                               ) : (
                                 <p className="text-xs text-muted-foreground">Laden…</p>
                               )}
-                              {bounds && (
+                              {bounds && (prefs.showFirstDep !== false || prefs.showLastDep !== false) && (
                                 <div className="flex gap-4 mt-1.5 pt-1.5 border-t border-border/50 text-xs text-muted-foreground">
-                                  <span>Erste Fahrt: <span className="font-mono">{bounds.firstDeparturePlanned || '–'}</span></span>
-                                  <span>Letzte Fahrt: <span className="font-mono">{bounds.lastDeparturePlanned || '–'}</span></span>
+                                  {prefs.showFirstDep !== false && (
+                                    <span>Erste Fahrt: <span className="font-mono">{bounds.firstDeparturePlanned || '–'}</span></span>
+                                  )}
+                                  {prefs.showLastDep !== false && (
+                                    <span>Letzte Fahrt: <span className="font-mono">{bounds.lastDeparturePlanned || '–'}</span></span>
+                                  )}
                                 </div>
                               )}
                             </>

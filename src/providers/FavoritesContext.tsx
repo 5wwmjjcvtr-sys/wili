@@ -17,6 +17,8 @@ interface FavoritesContextValue {
   setDepCount: (n: number) => void;
   setRefreshInterval: (n: number) => void;
   setThemePref: (t: 'light' | 'dark' | 'system') => void;
+  setShowFirstDep: (v: boolean) => void;
+  setShowLastDep: (v: boolean) => void;
   refreshInterval: number;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
@@ -147,6 +149,14 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setTheme(theme);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const setShowFirstDep = useCallback((v: boolean) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, showFirstDep: v } }));
+  }, []);
+
+  const setShowLastDep = useCallback((v: boolean) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, showLastDep: v } }));
+  }, []);
+
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
     return toReadableUrl(container, base);
@@ -171,6 +181,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setDepCount,
       setRefreshInterval,
       setThemePref,
+      setShowFirstDep,
+      setShowLastDep,
       refreshInterval,
       generateReadableUrl,
       generateEncodedUrl,

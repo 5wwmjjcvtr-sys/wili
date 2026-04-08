@@ -20,6 +20,8 @@ export interface FavoritesPrefs {
   mode?: 'direct' | 'proxy'; // default 'direct'
   refreshInterval?: number; // default 30
   theme?: 'light' | 'dark' | 'system'; // default 'system'
+  showFirstDep?: boolean; // default true
+  showLastDep?: boolean; // default true
 }
 
 export interface FavoritesContainer {
@@ -29,7 +31,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system' };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system', showFirstDep: true, showLastDep: true };
 
 // ─── LocalStorage ───
 
@@ -77,6 +79,12 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
     url.searchParams.set('t', container.prefs.theme);
   }
+  if (container.prefs.showFirstDep === false) {
+    url.searchParams.set('sf', '0');
+  }
+  if (container.prefs.showLastDep === false) {
+    url.searchParams.set('sl', '0');
+  }
   return url.toString();
 }
 
@@ -112,6 +120,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (r) prefs.refreshInterval = parseInt(r, 10);
   const t = url.searchParams.get('t');
   if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
+  if (url.searchParams.get('sf') === '0') prefs.showFirstDep = false;
+  if (url.searchParams.get('sl') === '0') prefs.showLastDep = false;
 
   return { v: 1, favorites, prefs };
 }
@@ -137,6 +147,8 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
         ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
         ...(container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
         ...(container.prefs.theme && container.prefs.theme !== DEFAULTS.theme ? { t: container.prefs.theme } : {}),
+        ...(container.prefs.showFirstDep === false ? { sf: false } : {}),
+        ...(container.prefs.showLastDep === false ? { sl: false } : {}),
       }
     } : {}),
   };
@@ -181,6 +193,8 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     if (compact.p?.m) prefs.mode = compact.p.m;
     if (compact.p?.r) prefs.refreshInterval = compact.p.r;
     if (compact.p?.t) prefs.theme = compact.p.t;
+    if (compact.p?.sf === false) prefs.showFirstDep = false;
+    if (compact.p?.sl === false) prefs.showLastDep = false;
 
     return { v: 1, favorites, prefs };
   } catch {
