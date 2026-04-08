@@ -99,7 +99,32 @@ export function normalizeMonitorResponse(
     }
   }
 
-  // Sort departures within each direction and limit to 3
+  // Parse elevator infos from trafficInfos
+  const elevatorMessages: ElevatorMessage[] = [];
+  for (const monitor of monitors) {
+    for (const info of monitor?.trafficInfos ?? []) {
+      const name = info?.name ?? '';
+      const title = info?.title ?? '';
+      // aufzugsinfo category
+      if (
+        name.toLowerCase().includes('aufzug') ||
+        title.toLowerCase().includes('aufzug') ||
+        (info?.trafficInfoCategoryId !== undefined && String(info.trafficInfoCategoryId) === '8')
+      ) {
+        elevatorMessages.push({
+          title: info.title ?? info.name ?? 'Aufzugsstörung',
+          description: info.description ?? '',
+        });
+      }
+    }
+  }
+
+  const stationInfrastructure: StationInfrastructure = {
+    hasElevatorIssue: elevatorMessages.length > 0,
+    elevatorMessages,
+  };
+
+  // Sort departures within each direction and limit to 10
   for (const [, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
       dir.departures.sort((a, b) => a.countdown - b.countdown);
@@ -126,5 +151,6 @@ export function normalizeMonitorResponse(
     station: { stopId, title: stationTitle },
     alerts: Array.from(alertsMap.values()),
     lineGroups,
+    stationInfrastructure,
   };
 }

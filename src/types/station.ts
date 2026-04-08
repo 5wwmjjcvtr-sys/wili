@@ -60,4 +60,5 @@ export interface StationView {
   };
   alerts: Alert[];
   lineGroups: LineGroup[];
+  stationInfrastructure?: StationInfrastructure;
 }
