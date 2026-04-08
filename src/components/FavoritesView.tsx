@@ -94,7 +94,7 @@ export function FavoritesView() {
       {!editMode && (
         <StatusBar
           updatedAt={updatedAt}
-          refreshInterval={30}
+          refreshInterval={refreshInterval}
           onRefresh={loadFavorites}
         />
       )}
