@@ -127,6 +127,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       isFavorite,
       toggleFavorite,
       removeFavorite,
+      moveStation,
+      moveItem,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,
