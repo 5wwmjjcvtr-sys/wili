@@ -134,6 +134,7 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
         ...(container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount ? { n: container.prefs.depCount } : {}),
         ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
         ...(container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
+        ...(container.prefs.theme && container.prefs.theme !== DEFAULTS.theme ? { t: container.prefs.theme } : {}),
       }
     } : {}),
   };
