@@ -107,7 +107,7 @@ export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props)
               </div>
               {dir.departures.length > 0 ? (
                 <div className="space-y-1">
-                  {dir.departures.map((dep, i) => (
+                  {dir.departures.slice(0, depCount).map((dep, i) => (
                     <DepartureRow key={i} departure={dep} />
                   ))}
                 </div>
