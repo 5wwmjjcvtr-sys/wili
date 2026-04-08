@@ -244,6 +244,20 @@ function findMatchingDepartures(
 ): MatchedDeparture[] {
   if (!view) return [];
 
+  // Check if a direction with the canonical towards exists for this line+directionId
+  let hasCanonicalDirection = false;
+  for (const lg of view.lineGroups) {
+    if (lg.name !== fav.lineName) continue;
+    for (const dir of lg.directions) {
+      if (dir.directionId !== fav.richtungsId) continue;
+      if (!isShortTurn(dir.towards, fav.canonicalToward)) {
+        hasCanonicalDirection = true;
+        break;
+      }
+    }
+    if (hasCanonicalDirection) break;
+  }
+
   const results: MatchedDeparture[] = [];
 
   for (const lg of view.lineGroups) {
@@ -252,7 +266,8 @@ function findMatchingDepartures(
     for (const dir of lg.directions) {
       if (dir.directionId !== fav.richtungsId) continue;
 
-      const short = isShortTurn(dir.towards, fav.canonicalToward);
+      // Only mark as short turn if the canonical direction also exists
+      const short = hasCanonicalDirection && isShortTurn(dir.towards, fav.canonicalToward);
 
       for (const dep of dir.departures) {
         results.push({
