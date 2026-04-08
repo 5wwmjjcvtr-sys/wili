@@ -64,24 +64,32 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const moveStation = useCallback((stopId: string, direction: 'up' | 'down') => {
     setContainer(prev => {
-      // Get unique station orders sorted
-      const stationOrders = [...new Set(prev.favorites.map(f => f.stopId))]
-        .map(sid => ({ stopId: sid, order: prev.favorites.find(f => f.stopId === sid)!.stationOrder }))
-        .sort((a, b) => a.order - b.order);
-      const idx = stationOrders.findIndex(s => s.stopId === stopId);
+      // First normalize stationOrder to ensure unique sequential values
+      const uniqueStops = [...new Set(prev.favorites.map(f => f.stopId))];
+      // Sort by current stationOrder (use first favorite per stop)
+      const stopOrders = uniqueStops.map(sid => ({
+        stopId: sid,
+        order: prev.favorites.find(f => f.stopId === sid)!.stationOrder,
+      })).sort((a, b) => a.order - b.order);
+
+      const idx = stopOrders.findIndex(s => s.stopId === stopId);
       if (idx < 0) return prev;
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= stationOrders.length) return prev;
-      const orderA = stationOrders[idx].order;
-      const orderB = stationOrders[swapIdx].order;
-      const swapStopId = stationOrders[swapIdx].stopId;
+      if (swapIdx < 0 || swapIdx >= stopOrders.length) return prev;
+
+      // Assign normalized sequential orders, then swap the two
+      const normalizedOrders = stopOrders.map((s, i) => ({ ...s, order: i }));
+      const tmpOrder = normalizedOrders[idx].order;
+      normalizedOrders[idx].order = normalizedOrders[swapIdx].order;
+      normalizedOrders[swapIdx].order = tmpOrder;
+
+      const orderMap = new Map(normalizedOrders.map(s => [s.stopId, s.order]));
       return {
         ...prev,
-        favorites: prev.favorites.map(f => {
-          if (f.stopId === stopId) return { ...f, stationOrder: orderB };
-          if (f.stopId === swapStopId) return { ...f, stationOrder: orderA };
-          return f;
-        }),
+        favorites: prev.favorites.map(f => ({
+          ...f,
+          stationOrder: orderMap.get(f.stopId) ?? f.stationOrder,
+        })),
       };
     });
   }, []);
