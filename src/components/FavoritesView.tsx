@@ -7,7 +7,7 @@ import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
 import { StatusBar } from './StatusBar';
-import { Star, Trash2, ChevronUp, ChevronDown, Pencil, Check } from 'lucide-react';
+import { Star, Trash2, ChevronUp, ChevronDown, Pencil, Check, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 
@@ -16,7 +16,7 @@ const UBAHN_COLORS: Record<string, string> = {
   U4: '#00A651', U5: '#A6C73A', U6: '#A8743A',
 };
 
-export function FavoritesView() {
+export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
   const { provider } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
@@ -213,8 +213,8 @@ export function FavoritesView() {
 
       {editMode && <ShareLinks />}
 
-      {/* Edit button at bottom of content */}
-      <div className="px-4 py-3 flex justify-end">
+      {/* Bottom action buttons */}
+      <div className="px-4 py-3 flex justify-end gap-2">
         <button
           onClick={() => setEditMode(!editMode)}
           className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
@@ -225,6 +225,13 @@ export function FavoritesView() {
           aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
         >
           {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={onOpenSettings}
+          className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
+          aria-label="Einstellungen"
+        >
+          <Settings className="h-4 w-4" />
         </button>
       </div>
     </div>
