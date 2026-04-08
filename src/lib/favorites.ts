@@ -19,6 +19,7 @@ export interface FavoritesPrefs {
   depCount?: number; // default 3
   mode?: 'direct' | 'proxy'; // default 'direct'
   refreshInterval?: number; // default 30
+  theme?: 'light' | 'dark' | 'system'; // default 'system'
 }
 
 export interface FavoritesContainer {
