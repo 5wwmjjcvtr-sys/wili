@@ -286,6 +286,7 @@ function findScheduleBounds(
     if (lg.name !== fav.lineName) continue;
     for (const dir of lg.directions) {
       if (dir.directionId !== fav.richtungsId) continue;
+      if (dir.towards.trim().toLowerCase() !== fav.canonicalToward.trim().toLowerCase()) continue;
       if (dir.scheduleBounds) return dir.scheduleBounds;
     }
   }
