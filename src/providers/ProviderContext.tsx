@@ -9,6 +9,10 @@ interface ProviderContextValue {
   mode: DataMode;
   setMode: (mode: DataMode) => void;
   provider: StationViewProvider;
+  showDebugUrl: boolean;
+  setShowDebugUrl: (v: boolean) => void;
+  lastApiUrl: string | null;
+  setLastApiUrl: (url: string | null) => void;
 }
 
 const ProviderContext = createContext<ProviderContextValue | null>(null);
@@ -18,10 +22,12 @@ const proxyProvider = new ProxyProvider();
 
 export function DataProviderWrapper({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<DataMode>('proxy');
+  const [showDebugUrl, setShowDebugUrl] = useState(true);
+  const [lastApiUrl, setLastApiUrl] = useState<string | null>(null);
   const provider = useMemo(() => (mode === 'direct' ? directProvider : proxyProvider), [mode]);
 
   return (
-    <ProviderContext.Provider value={{ mode, setMode, provider }}>
+    <ProviderContext.Provider value={{ mode, setMode, provider, showDebugUrl, setShowDebugUrl, lastApiUrl, setLastApiUrl }}>
       {children}
     </ProviderContext.Provider>
   );
