@@ -6,6 +6,7 @@ import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
 import { LineGroupCard } from '@/components/LineGroupCard';
 import { SearchResult, StationView } from '@/types/station';
+import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 
 const REFRESH_INTERVAL = 30;
 
@@ -16,15 +17,19 @@ function MonitorApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stopRef = useRef<string | null>(null);
+  const boundsRef = useRef<any[]>([]);
 
   const fetchStation = useCallback(async (stopId: string) => {
     setLoading(true);
     setError(null);
     try {
       const view = await provider.getStationView(stopId);
-      // Only update if still the same station
       if (stopRef.current === stopId) {
-        setStationView(view);
+        // Merge cached schedule bounds into the view
+        const merged = boundsRef.current.length > 0
+          ? mergeScheduleBounds(view, boundsRef.current)
+          : view;
+        setStationView(merged);
       }
     } catch (e: any) {
       if (stopRef.current === stopId) {
@@ -38,8 +43,15 @@ function MonitorApp() {
   const handleSelect = useCallback((stop: SearchResult) => {
     setSelectedStop(stop);
     stopRef.current = stop.stopId;
+    boundsRef.current = [];
     setStationView(null);
     fetchStation(stop.stopId);
+    // Fetch schedule bounds once per station change (non-blocking)
+    fetchScheduleBounds(stop.stopId).then((bounds) => {
+      boundsRef.current = bounds;
+      // Re-merge if we already have a station view
+      setStationView((prev) => prev ? mergeScheduleBounds(prev, bounds) : prev);
+    });
   }, [fetchStation]);
 
   const handleRefresh = useCallback(() => {
