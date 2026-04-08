@@ -23,6 +23,7 @@ export function FavoritesView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string>(new Date().toISOString());
   const boundsCache = useRef<Map<string, any[]>>(new Map());
 
   const depCount = getEffectiveDepCount(prefs);
