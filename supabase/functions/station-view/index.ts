@@ -10,13 +10,37 @@ const STEIGE_CSV = 'https://data.wien.gv.at/csv/wienerlinien-ogd-steige.csv';
 // Cache: DIVA -> RBL numbers
 let divaToRbl: Map<string, string[]> | null = null;
 
+async function fetchWithRetry(url: string, init?: RequestInit, attempts = 3): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(url, init);
+
+      if (response.ok || attempt === attempts || response.status < 500) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === attempts) {
+        throw error;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+  }
+
+  throw lastError ?? new Error(`Failed to fetch ${url}`);
+}
+
 async function loadDivaToRbl(): Promise<Map<string, string[]>> {
   if (divaToRbl) return divaToRbl;
 
   // Load both CSVs in parallel
   const [halteRes, steigeRes] = await Promise.all([
-    fetch(HALTESTELLEN_CSV),
-    fetch(STEIGE_CSV),
+    fetchWithRetry(HALTESTELLEN_CSV),
+    fetchWithRetry(STEIGE_CSV),
   ]);
   if (!halteRes.ok) throw new Error(`Haltestellen CSV: ${halteRes.status}`);
   if (!steigeRes.ok) throw new Error(`Steige CSV: ${steigeRes.status}`);
@@ -108,7 +132,7 @@ Deno.serve(async (req) => {
     // Build URL with multiple stopId params (RBL numbers)
     const params = rblNumbers.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
     const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz`;
-    const res = await fetch(url);
+    const res = await fetchWithRetry(url);
     if (!res.ok) throw new Error(`Monitor API: ${res.status}`);
     const data = await res.json();
 
