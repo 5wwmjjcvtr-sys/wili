@@ -110,6 +110,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (m === 'direct' || m === 'proxy') prefs.mode = m;
   const r = url.searchParams.get('r');
   if (r) prefs.refreshInterval = parseInt(r, 10);
+  const t = url.searchParams.get('t');
+  if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
 
   return { v: 1, favorites, prefs };
 }
