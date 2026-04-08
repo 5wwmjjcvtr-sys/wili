@@ -17,6 +17,7 @@ type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
+  const { refreshInterval } = useFavorites();
   const [selectedStop, setSelectedStop] = useState<SearchResult | null>(null);
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
