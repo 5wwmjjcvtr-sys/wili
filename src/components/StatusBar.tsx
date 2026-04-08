@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface Props {
   updatedAt: string;
@@ -32,10 +33,25 @@ export function StatusBar({ updatedAt, refreshInterval, onRefresh }: Props) {
     }
   };
 
+  const handleManualRefresh = () => {
+    onRefresh();
+    setCountdown(refreshInterval);
+  };
+
   return (
     <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground bg-muted/50 border-b border-border">
       <span>Aktualisiert: {formatTime(updatedAt)}</span>
-      <span>Neu in {countdown} s</span>
+      <div className="flex items-center gap-2">
+        <span>Neu in {countdown} s</span>
+        <button
+          onClick={handleManualRefresh}
+          className="p-1 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          aria-label="Jetzt aktualisieren"
+          title="Jetzt aktualisieren"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
