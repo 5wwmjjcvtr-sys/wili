@@ -142,6 +142,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     return toEncodedUrl(container, base);
   }, [container]);
 
+  const refreshInterval = getEffectiveRefreshInterval(container.prefs);
+
   return (
     <FavoritesContext.Provider value={{
       favorites: container.favorites,
@@ -152,6 +154,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       moveStation,
       moveItem,
       setDepCount,
+      setRefreshInterval,
+      refreshInterval,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,
