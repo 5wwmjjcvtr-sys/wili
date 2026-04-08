@@ -49,7 +49,7 @@ export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props
 
       <div className="flex min-w-0 items-center gap-2">
         {isShortTurn && (
-          <Badge variant="outline" className="h-5 shrink-0 px-2 text-[10px] border-amber-400 text-amber-600">
+          <Badge variant="outline" className="h-5 shrink-0 border-[hsl(var(--wl-alert))] px-2 text-[10px] text-[hsl(var(--wl-alert))]">
             Kurz
           </Badge>
         )}
