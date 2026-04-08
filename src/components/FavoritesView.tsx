@@ -120,16 +120,28 @@ export function FavoritesView() {
       )}
 
       <div className="px-4 py-3 space-y-3">
-        {Array.from(groupedByStation.entries()).map(([stopId, favs]) => {
+        {stationEntries.map(([stopId, favs], stationIdx) => {
           const view = stationViews.get(stopId);
           const stationTitle = favs[0]?.stationTitle || view?.station?.title || stopId;
 
           return (
             <div key={stopId} className="space-y-2">
-              <h3 className="text-sm font-semibold text-foreground">{stationTitle}</h3>
-              {favs.map(fav => {
-                // Find matching direction in view
-                const matchingDepartures = findMatchingDepartures(view, fav, depCount);
+              <div className="flex items-center gap-1">
+                {editMode && (
+                  <div className="flex flex-col">
+                    <button onClick={() => moveStation(stopId, 'up')} disabled={stationIdx === 0}
+                      className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => moveStation(stopId, 'down')} disabled={stationIdx === stationEntries.length - 1}
+                      className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+                <h3 className="text-sm font-semibold text-foreground">{stationTitle}</h3>
+              </div>
+              {favs.map((fav, itemIdx) => {
                 const lineBadgeStyle = fav.transportType === 'metro' && UBAHN_COLORS[fav.lineName]
                   ? { backgroundColor: UBAHN_COLORS[fav.lineName] }
                   : undefined;
@@ -140,41 +152,55 @@ export function FavoritesView() {
                 return (
                   <div key={fav.directionKey} className="rounded-lg border border-border bg-card overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border">
+                      {editMode && (
+                        <div className="flex flex-col">
+                          <button onClick={() => moveItem(fav.directionKey, 'up')} disabled={itemIdx === 0}
+                            className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                            <ChevronUp className="h-3 w-3" />
+                          </button>
+                          <button onClick={() => moveItem(fav.directionKey, 'down')} disabled={itemIdx === favs.length - 1}
+                            className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                            <ChevronDown className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                       <span className={lineBadgeClass} style={lineBadgeStyle}>{fav.lineName}</span>
                       <span className="text-sm font-medium text-foreground truncate flex-1">
                         → {fav.canonicalToward}
                       </span>
-                      <button
-                        onClick={() => removeFavorite(fav.directionKey)}
-                        className="p-1 rounded-full hover:bg-destructive/10 transition-colors"
-                        aria-label="Favorit entfernen"
-                      >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                      </button>
-                    </div>
-                    <div className="px-3 py-2.5">
-                      {matchingDepartures.length > 0 ? (
-                        <div className="space-y-1">
-                          {matchingDepartures.map((dep, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <DepartureRow
-                                departure={dep.departure}
-                                isShortTurn={dep.isShort}
-                              />
-                              {dep.isShort && dep.towards && (
-                                <span className="text-[10px] text-muted-foreground truncate">
-                                  → {dep.towards}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : view ? (
-                        <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Laden…</p>
+                      {editMode && (
+                        <button
+                          onClick={() => removeFavorite(fav.directionKey)}
+                          className="p-1 rounded-full hover:bg-destructive/10 transition-colors"
+                          aria-label="Favorit entfernen"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </button>
                       )}
                     </div>
+                    {!editMode && (
+                      <div className="px-3 py-2.5">
+                        {(() => {
+                          const matchingDepartures = findMatchingDepartures(view, fav, depCount);
+                          return matchingDepartures.length > 0 ? (
+                            <div className="space-y-1">
+                              {matchingDepartures.map((dep, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
+                                  {dep.isShort && dep.towards && (
+                                    <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : view ? (
+                            <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Laden…</p>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
                 );
               })}
