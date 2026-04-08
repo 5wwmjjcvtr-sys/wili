@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataProviderWrapper, useDataProvider } from '@/providers/ProviderContext';
-import { FavoritesProvider } from '@/providers/FavoritesContext';
+import { FavoritesProvider, useFavorites } from '@/providers/FavoritesContext';
 import { StationSearch } from '@/components/StationSearch';
 import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
