@@ -11,7 +11,7 @@ import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 import { Star, Search, Settings } from 'lucide-react';
 
-const REFRESH_INTERVAL = 30;
+
 
 type AppTab = 'search' | 'favorites' | 'settings';
 
