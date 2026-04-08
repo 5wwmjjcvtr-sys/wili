@@ -213,20 +213,7 @@ export function FavoritesView() {
 
       {editMode && <ShareLinks />}
 
-      {/* Edit button at bottom of content */}
-      <div className="px-4 py-3 flex justify-end">
-        <button
-          onClick={() => setEditMode(!editMode)}
-          className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
-            editMode
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground border border-border'
-          }`}
-          aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
-        >
-          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-        </button>
-      </div>
+      {/* Edit button rendered via parent */}
     </div>
   );
 }
