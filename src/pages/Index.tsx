@@ -35,7 +35,8 @@ function MonitorApp() {
           setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
         }
       } else {
-        setLastApiUrl(`Edge Function: station-view { stopId: "${stopId}" }`);
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        setLastApiUrl(`${supabaseUrl}/functions/v1/station-view  POST { "stopId": "${stopId}" }`);
       }
 
       const view = await provider.getStationView(stopId);
@@ -86,9 +87,20 @@ function MonitorApp() {
       <AppHeader />
       {showDebugUrl && lastApiUrl && (
         <div className="px-4 py-1.5 bg-muted/30 border-b border-border">
-          <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
-            {lastApiUrl}
-          </p>
+          {lastApiUrl.startsWith('http') ? (
+            <a
+              href={lastApiUrl.split(/\s+/)[0]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-mono text-primary underline break-all leading-tight block"
+            >
+              {lastApiUrl}
+            </a>
+          ) : (
+            <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
+              {lastApiUrl}
+            </p>
+          )}
         </div>
       )}
       <StationSearch onSelect={handleSelect} selectedStation={selectedStop?.name} />
