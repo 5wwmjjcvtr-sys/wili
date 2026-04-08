@@ -189,8 +189,8 @@ function MonitorApp() {
       {activeTab === 'favorites' && <FavoritesView onOpenSettings={() => setActiveTab('settings')} />}
       {activeTab === 'settings' && <SettingsView />}
 
-      {/* Settings button at bottom right - only on search and favorites tabs */}
-      {activeTab !== 'settings' && (
+      {/* Settings button at bottom right - only on search tab */}
+      {activeTab === 'search' && (
         <div className="px-4 py-3 flex justify-end">
           <button
             onClick={() => setActiveTab('settings')}
