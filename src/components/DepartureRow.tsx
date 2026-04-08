@@ -1,5 +1,6 @@
 import { Departure } from '@/types/station';
 import { Badge } from '@/components/ui/badge';
+import { Accessibility } from 'lucide-react';
 
 interface Props {
   departure: Departure;
@@ -30,6 +31,9 @@ export function DepartureRow({ departure, isShortTurn }: Props) {
         }`}
         title={departure.isRealtime ? 'Echtzeit' : 'Fahrplan'}
       />
+      {departure.isBarrierFree && (
+        <Accessibility className="h-3 w-3 text-muted-foreground shrink-0" aria-label="Barrierefrei" />
+      )}
       <span className="font-mono font-semibold text-foreground min-w-[2.5rem] text-right">
         {departure.countdown <= 0 ? 'jetzt' : `${departure.countdown}'`}
       </span>

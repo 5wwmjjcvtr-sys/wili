@@ -99,9 +99,6 @@ export function LineGroupCard({ lineGroup, stationStopId, stationTitle }: Props)
                 {dir.platform && (
                   <span className="text-xs text-muted-foreground">Steig {dir.platform}</span>
                 )}
-                {dir.isBarrierFree && (
-                  <Accessibility className="h-3.5 w-3.5 text-muted-foreground" aria-label="Barrierefrei" />
-                )}
                 {favorite && <FavoritesStar favorite={favorite} />}
               </div>
               {dir.departures.length > 0 ? (
