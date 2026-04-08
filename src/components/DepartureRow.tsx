@@ -1,10 +1,12 @@
 import { Departure } from '@/types/station';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   departure: Departure;
+  isShortTurn?: boolean;
 }
 
-export function DepartureRow({ departure }: Props) {
+export function DepartureRow({ departure, isShortTurn }: Props) {
   const formatTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -32,6 +34,11 @@ export function DepartureRow({ departure }: Props) {
         {departure.countdown <= 0 ? 'jetzt' : `${departure.countdown}'`}
       </span>
       <span className="text-muted-foreground text-xs">{displayTime}</span>
+      {isShortTurn && (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-400 text-amber-600">
+          Kurz
+        </Badge>
+      )}
     </div>
   );
 }

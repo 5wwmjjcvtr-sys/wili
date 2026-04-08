@@ -1,89 +1,40 @@
 
-# Wiener Linien Abfahrtsmonitor – PWA
-
-## Übersicht
-Eine minimalistische, mobil-optimierte PWA für Wiener-Linien-Abfahrten. Schnell, übersichtlich, mit Echtzeit-Daten und Störungsmeldungen.
-
-## Datenquellen (Wiener Linien Open Data)
-- **Haltestellenliste**: CSV von `data.wien.gv.at` (wird beim Start geladen und im Client gecacht für die Suche)
-- **Abfahrten**: `https://www.wienerlinien.at/ogd_realtime/monitor?stopId=...&activateTrafficInfo=stoerungkurz`
-- **Störungen**: `https://www.wienerlinien.at/ogd_realtime/trafficInfoList?relatedStop=...`
-- Kein API-Key nötig
-
-## Features (V1)
-
-### 1. Stationssuche
-- Suchfeld oben, Live-Filter bei Eingabe
-- Haltestellenliste wird aus CSV geladen (Name + DIVA-Nummer)
-- Fuzzy-Suche mit Tippfehler-Toleranz
-- Nach Auswahl → sofort Abfahrtsansicht
-
-### 2. Abfahrtsanzeige
-- Gruppierung nach Linienart (U-Bahn → Bim → Bus → Nightline)
-- Innerhalb: nach Linie sortiert, beide Richtungen getrennt dargestellt
-- Pro Richtung: Linie, Ziel, Steig, nächste 3 Abfahrten, Niederflur-Icon
-- **Echtzeit vs. Fahrplan** deutlich visuell markiert (z.B. grüner Punkt = Echtzeit, grauer Punkt = Fahrplan)
-
-### 3. Störungsmeldungen
-- Eigener Bereich unter der Statuszeile
-- Lokale Störungen (aktuelle Station/Linien) + relevante Netzstörungen
-- Lift-/Rolltreppenstörungen nur wenn aktuelle Station betroffen
-- Details aufklappbar
-
-### 4. Auto-Refresh
-- Alle 30 Sekunden automatisch
-- Statuszeile: "Aktualisiert: 14:32:10" + "Neu in 24 s" Countdown
-- Nur Daten neu laden, nicht die ganze Seite
-
-### 5. Direkt/Proxy-Umschalter (Testbetrieb)
-- Toggle im Header sichtbar
-- **Direktmodus**: Frontend ruft Wiener-Linien-API direkt auf
-- **Proxy-Modus**: Frontend ruft Supabase Edge Functions auf, diese rufen die Wiener-Linien-API
-- Zwei Edge Functions: `stops-search` und `station-view`
-- Identisches Verhalten in beiden Modi
-
-### 6. PWA
-- Web App Manifest für Installation auf Home-Bildschirm
-- App-artiges Verhalten (standalone display)
-- Kein Offline-Support in V1
-- Kein Service Worker (nur Manifest für Installierbarkeit)
+# Favoriten-System
 
 ## Architektur
 
-### Provider-Abstraktion
-```
-interface StationViewProvider {
-  searchStops(query: string): Promise<SearchResult[]>
-  getStationView(stopId: string): Promise<StationView>
-}
-```
-- `DirectProvider` → ruft WL-API direkt auf
-- `ProxyProvider` → ruft Edge Functions auf
-- Gemeinsames normalisiertes Datenmodell
+### 1. Datenmodell & Serialisierung (`src/lib/favorites.ts`)
+- `Favorite` Interface mit stopId, stationTitle, lineName, transportType, richtungsId, direction, directionKey, canonicalToward, platform, allowShortTurns
+- Versionierter Container `{ v: 1, favorites: [...], prefs: { depCount?, mode? } }`
+- localStorage CRUD (save/load/add/remove)
+- URL-Serialisierung: lesbare Variante (Query-Params) + kodierte Variante (JSON→Base64URL)
+- URL-Deserialisierung mit Priorität: kodiert > lesbar > localStorage
+- Standardwert-Logik: depCount=3, mode=direct werden bei Linkgenerierung weggelassen
 
-### Internes Datenmodell
-- `StationView`: mode, updatedAt, station, alerts[], lineGroups[]
-- `LineGroup`: type (metro/tram/bus/nightline), line, directions[]
-- `Direction`: towards, platform, departures[], isBarrierFree
-- `Departure`: countdown, time, isRealtime
+### 2. React Context (`src/providers/FavoritesContext.tsx`)
+- State: favorites[], prefs, isFavorite(), toggleFavorite(), generateReadableUrl(), generateEncodedUrl()
+- URL-Parsing beim App-Start
 
-### Edge Functions (Proxy)
-- `GET /stops-search?q=...` → Stationssuche
-- `GET /station-view?stopId=...` → Komplette Stationsansicht mit Störungen
+### 3. UI-Änderungen
+- **Stern-Button** in `LineGroupCard` pro Richtungsblock
+- **Kurzführungs-Badge** in `DepartureRow` ("Kurz" Badge wenn towards ≠ canonicalToward)
+- **Favoritenansicht** als Tab/Ansicht: nur favorisierte Richtungsblöcke, gruppiert nach Station
+- **Link-Generierung UI**: beide Varianten anzeigen mit Copy-Buttons
 
-## UI-Aufbau (Mobile-First)
-1. **Header**: App-Name "WL Monitor" + Direkt/Proxy Toggle
-2. **Suchfeld**: Große Touch-Fläche, sofortige Filterung
-3. **Statuszeile**: Aktualisierungszeitpunkt + Countdown
-4. **Störungsbereich**: Warnungen mit aufklappbaren Details
-5. **Abfahrtsblöcke**: Karten pro Linie mit Richtungsblöcken
+### 4. Favoritenansicht-Logik
+- Alle benötigten stopIds sammeln
+- API-Aufrufe gruppiert pro Station
+- Clientseitig nach directionKey filtern
+- depCount Abfahrten anzeigen
+- Kurzführungen markieren
 
-## Fehlerverhalten
-- Keine Treffer → klarer Hinweis
-- API-Fehler → Fehlermeldung, letzte Daten bleiben sichtbar
-- Kein Absturz, kein undefinierter Zustand
-
-## Design
-- Minimalistisch, hoher Kontrast, große Schrift
-- Farben: U-Bahn-Linienfarben wo passend, sonst neutral
-- Reduzierte Optik, Fokus auf Lesbarkeit
+## Dateien
+- `src/lib/favorites.ts` (neu)
+- `src/providers/FavoritesContext.tsx` (neu)
+- `src/components/FavoritesStar.tsx` (neu)
+- `src/components/FavoritesView.tsx` (neu)
+- `src/components/ShareLinks.tsx` (neu)
+- `src/components/LineGroupCard.tsx` (ändern - Stern einfügen)
+- `src/components/DepartureRow.tsx` (ändern - Kurz-Badge)
+- `src/pages/Index.tsx` (ändern - Favoritenansicht + URL-Parsing)
+- `src/types/station.ts` (ändern - Departure.towards Feld)
