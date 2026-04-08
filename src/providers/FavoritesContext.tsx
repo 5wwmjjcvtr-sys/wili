@@ -170,6 +170,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       moveItem,
       setDepCount,
       setRefreshInterval,
+      setThemePref,
       refreshInterval,
       generateReadableUrl,
       generateEncodedUrl,
