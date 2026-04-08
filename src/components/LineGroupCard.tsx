@@ -3,7 +3,6 @@ import { useFavorites } from '@/providers/FavoritesContext';
 import { getEffectiveDepCount } from '@/lib/favorites';
 import { DepartureRow } from './DepartureRow';
 import { FavoritesStar } from './FavoritesStar';
-import { Accessibility } from 'lucide-react';
 import { buildDirectionKey, Favorite } from '@/lib/favorites';
 
 interface Props {
