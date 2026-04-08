@@ -20,6 +20,8 @@ export interface FavoritesPrefs {
   mode?: 'direct' | 'proxy'; // default 'direct'
   refreshInterval?: number; // default 30
   theme?: 'light' | 'dark' | 'system'; // default 'system'
+  showFirstDep?: boolean; // default true
+  showLastDep?: boolean; // default true
 }
 
 export interface FavoritesContainer {
