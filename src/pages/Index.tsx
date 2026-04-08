@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataProviderWrapper, useDataProvider } from '@/providers/ProviderContext';
 import { FavoritesProvider } from '@/providers/FavoritesContext';
-import { AppHeader } from '@/components/AppHeader';
 import { StationSearch } from '@/components/StationSearch';
 import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
@@ -22,7 +21,7 @@ function MonitorApp() {
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<AppTab>('search');
+  const [activeTab, setActiveTab] = useState<AppTab>('favorites');
   const stopRef = useRef<string | null>(null);
   const boundsRef = useRef<any[]>([]);
 
@@ -85,22 +84,9 @@ function MonitorApp() {
   }, [provider, fetchStation]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
-      <AppHeader />
-
+    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto relative pb-14">
       {/* Tab bar */}
       <div className="flex border-b border-border">
-        <button
-          onClick={() => setActiveTab('search')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === 'search'
-              ? 'text-foreground border-b-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Search className="h-4 w-4" />
-          Station
-        </button>
         <button
           onClick={() => setActiveTab('favorites')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
@@ -113,15 +99,15 @@ function MonitorApp() {
           Favoriten
         </button>
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => setActiveTab('search')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === 'settings'
+            activeTab === 'search'
               ? 'text-foreground border-b-2 border-primary'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Settings className="h-4 w-4" />
-          Einstellungen
+          <Search className="h-4 w-4" />
+          Station
         </button>
       </div>
 
@@ -214,6 +200,19 @@ function MonitorApp() {
 
       {activeTab === 'favorites' && <FavoritesView />}
       {activeTab === 'settings' && <SettingsView />}
+
+      {/* Floating settings button - bottom right */}
+      <button
+        onClick={() => setActiveTab(activeTab === 'settings' ? 'favorites' : 'settings')}
+        className={`fixed bottom-4 right-4 z-50 h-10 w-10 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+          activeTab === 'settings'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-card text-muted-foreground hover:text-foreground border border-border'
+        }`}
+        aria-label="Einstellungen"
+      >
+        <Settings className="h-5 w-5" />
+      </button>
     </div>
   );
 }
