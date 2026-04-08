@@ -178,6 +178,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     if (compact.p?.n) prefs.depCount = compact.p.n;
     if (compact.p?.m) prefs.mode = compact.p.m;
     if (compact.p?.r) prefs.refreshInterval = compact.p.r;
+    if (compact.p?.t) prefs.theme = compact.p.t;
 
     return { v: 1, favorites, prefs };
   } catch {
