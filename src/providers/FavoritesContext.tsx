@@ -38,10 +38,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const toggleFavorite = useCallback((fav: Favorite) => {
     setContainer(prev => {
       const exists = prev.favorites.some(f => f.directionKey === fav.directionKey);
-      const favorites = exists
-        ? prev.favorites.filter(f => f.directionKey !== fav.directionKey)
-        : [...prev.favorites, fav];
-      return { ...prev, favorites };
+      if (exists) {
+        return { ...prev, favorites: prev.favorites.filter(f => f.directionKey !== fav.directionKey) };
+      }
+      // Auto-assign order: stationOrder = max existing for this stop or next global, itemOrder = count within stop
+      const sameStop = prev.favorites.filter(f => f.stopId === fav.stopId);
+      const stationOrder = sameStop.length > 0
+        ? sameStop[0].stationOrder
+        : (prev.favorites.length > 0 ? Math.max(...prev.favorites.map(f => f.stationOrder)) + 1 : 0);
+      const itemOrder = sameStop.length > 0
+        ? Math.max(...sameStop.map(f => f.itemOrder)) + 1
+        : 0;
+      return { ...prev, favorites: [...prev.favorites, { ...fav, stationOrder, itemOrder }] };
     });
   }, []);
 
