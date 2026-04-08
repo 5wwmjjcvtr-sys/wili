@@ -5,9 +5,10 @@ import { Accessibility } from 'lucide-react';
 interface Props {
   departure: Departure;
   isShortTurn?: boolean;
+  shortTurnTowards?: string;
 }
 
-export function DepartureRow({ departure, isShortTurn }: Props) {
+export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props) {
   const formatTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -22,27 +23,40 @@ export function DepartureRow({ departure, isShortTurn }: Props) {
     : formatTime(departure.timePlanned);
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="grid grid-cols-[0.75rem_0.875rem_3.25rem_5.5rem_minmax(0,1fr)] items-center gap-x-3 text-sm">
       <span
-        className={`inline-block w-2 h-2 rounded-full shrink-0 ${
+        className={`inline-block h-2 w-2 rounded-full shrink-0 ${
           departure.isRealtime
             ? 'bg-[hsl(var(--wl-realtime))]'
             : 'bg-[hsl(var(--wl-schedule))]'
         }`}
         title={departure.isRealtime ? 'Echtzeit' : 'Fahrplan'}
       />
-      {departure.isBarrierFree && (
-        <Accessibility className="h-3 w-3 text-muted-foreground shrink-0" aria-label="Barrierefrei" />
-      )}
-      <span className="font-mono font-semibold text-foreground min-w-[2.5rem] text-right">
+
+      <span className="flex h-3 w-3 items-center justify-center">
+        {departure.isBarrierFree && (
+          <Accessibility className="h-3 w-3 text-muted-foreground shrink-0" aria-label="Barrierefrei" />
+        )}
+      </span>
+
+      <span className="font-mono font-semibold text-foreground text-right">
         {departure.countdown <= 0 ? 'jetzt' : `${departure.countdown}'`}
       </span>
-      <span className="text-muted-foreground text-xs">{displayTime}</span>
-      {isShortTurn && (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-400 text-amber-600">
-          Kurz
-        </Badge>
-      )}
+
+      <span className="text-muted-foreground text-xs tabular-nums">
+        {displayTime}
+      </span>
+
+      <div className="flex min-w-0 items-center gap-2">
+        {isShortTurn && (
+          <Badge variant="outline" className="h-5 shrink-0 px-2 text-[10px] border-amber-400 text-amber-600">
+            Kurz
+          </Badge>
+        )}
+        {isShortTurn && shortTurnTowards && (
+          <span className="truncate text-[10px] text-muted-foreground">→ {shortTurnTowards}</span>
+        )}
+      </div>
     </div>
   );
 }
