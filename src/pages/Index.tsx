@@ -138,7 +138,7 @@ function MonitorApp() {
             <>
               <StatusBar
                 updatedAt={stationView.updatedAt}
-                refreshInterval={REFRESH_INTERVAL}
+                refreshInterval={refreshInterval}
                 onRefresh={handleRefresh}
               />
               <AlertsSection alerts={stationView.alerts} />
