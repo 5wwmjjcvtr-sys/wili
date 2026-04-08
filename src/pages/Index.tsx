@@ -213,6 +213,7 @@ function MonitorApp() {
       )}
 
       {activeTab === 'favorites' && <FavoritesView />}
+      {activeTab === 'settings' && <SettingsView />}
     </div>
   );
 }
