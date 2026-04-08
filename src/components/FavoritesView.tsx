@@ -15,11 +15,12 @@ const UBAHN_COLORS: Record<string, string> = {
 };
 
 export function FavoritesView() {
-  const { favorites, prefs, removeFavorite } = useFavorites();
+  const { favorites, prefs, removeFavorite, moveStation, moveItem } = useFavorites();
   const { provider } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
   const boundsCache = useRef<Map<string, any[]>>(new Map());
 
   const depCount = getEffectiveDepCount(prefs);
