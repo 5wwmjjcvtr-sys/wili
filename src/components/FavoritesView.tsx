@@ -206,7 +206,7 @@ export function FavoritesView() {
         })}
       </div>
 
-      <ShareLinks />
+      {editMode && <ShareLinks />}
     </div>
   );
 }
