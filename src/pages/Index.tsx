@@ -11,8 +11,6 @@ import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 import { Star, Search, Settings } from 'lucide-react';
 
-
-
 type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
@@ -85,9 +83,9 @@ function MonitorApp() {
   }, [provider, fetchStation]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto relative pb-14">
-      {/* Tab bar */}
-      <div className="flex border-b border-border">
+    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
+      {/* Sticky tab bar */}
+      <div className="flex border-b border-border sticky top-0 z-40 bg-background">
         <button
           onClick={() => setActiveTab('favorites')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
@@ -109,6 +107,17 @@ function MonitorApp() {
         >
           <Search className="h-4 w-4" />
           Station
+        </button>
+        <button
+          onClick={() => setActiveTab(activeTab === 'settings' ? 'favorites' : 'settings')}
+          className={`flex items-center justify-center px-3 py-2.5 transition-colors ${
+            activeTab === 'settings'
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          aria-label="Einstellungen"
+        >
+          <Settings className="h-4 w-4" />
         </button>
       </div>
 
@@ -175,38 +184,13 @@ function MonitorApp() {
                   Keine Abfahrten verfügbar
                 </p>
               )}
-
-              <div className="flex items-center gap-4 text-xs text-muted-foreground py-2">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-realtime))]" />
-                  Echtzeit
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--wl-schedule))]" />
-                  Fahrplan
-                </span>
-              </div>
             </div>
           )}
-
         </>
       )}
 
       {activeTab === 'favorites' && <FavoritesView />}
       {activeTab === 'settings' && <SettingsView />}
-
-      {/* Floating settings button - bottom right */}
-      <button
-        onClick={() => setActiveTab(activeTab === 'settings' ? 'favorites' : 'settings')}
-        className={`fixed bottom-4 right-4 z-50 h-10 w-10 rounded-full shadow-lg flex items-center justify-center transition-colors ${
-          activeTab === 'settings'
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-card text-muted-foreground hover:text-foreground border border-border'
-        }`}
-        aria-label="Einstellungen"
-      >
-        <Settings className="h-5 w-5" />
-      </button>
     </div>
   );
 }
