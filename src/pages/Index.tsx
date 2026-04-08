@@ -84,6 +84,13 @@ function MonitorApp() {
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <AppHeader />
+      {showDebugUrl && lastApiUrl && (
+        <div className="px-4 py-1.5 bg-muted/30 border-b border-border">
+          <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
+            {lastApiUrl}
+          </p>
+        </div>
+      )}
       <StationSearch onSelect={handleSelect} selectedStation={selectedStop?.name} />
 
       {stationView && (
