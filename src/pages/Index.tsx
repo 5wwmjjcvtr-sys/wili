@@ -11,7 +11,7 @@ import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds'
 const REFRESH_INTERVAL = 30;
 
 function MonitorApp() {
-  const { provider } = useDataProvider();
+  const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
   const [selectedStop, setSelectedStop] = useState<SearchResult | null>(null);
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,9 +23,23 @@ function MonitorApp() {
     setLoading(true);
     setError(null);
     try {
+      // Build debug URL
+      if (mode === 'direct') {
+        const { loadRblMapping } = await import('@/lib/stops-loader');
+        const rblMap = await loadRblMapping();
+        const rbls = rblMap.get(stopId) ?? [];
+        if (rbls.length > 0) {
+          const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
+          setLastApiUrl(`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz`);
+        } else {
+          setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
+        }
+      } else {
+        setLastApiUrl(`Edge Function: station-view { stopId: "${stopId}" }`);
+      }
+
       const view = await provider.getStationView(stopId);
       if (stopRef.current === stopId) {
-        // Merge cached schedule bounds into the view
         const merged = boundsRef.current.length > 0
           ? mergeScheduleBounds(view, boundsRef.current)
           : view;
@@ -38,7 +52,7 @@ function MonitorApp() {
     } finally {
       setLoading(false);
     }
-  }, [provider]);
+  }, [provider, mode, setLastApiUrl]);
 
   const handleSelect = useCallback((stop: SearchResult) => {
     setSelectedStop(stop);
