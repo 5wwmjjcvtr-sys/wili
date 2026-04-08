@@ -17,7 +17,7 @@ const UBAHN_COLORS: Record<string, string> = {
 };
 
 export function FavoritesView() {
-  const { favorites, prefs, removeFavorite, moveStation, moveItem } = useFavorites();
+  const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
   const { provider } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
   const [loading, setLoading] = useState(false);
