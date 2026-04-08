@@ -1,40 +1,35 @@
 
-# Favoriten-System
 
-## Architektur
+# Bearbeiten-Modus mit Pfeiltasten und Löschen
 
-### 1. Datenmodell & Serialisierung (`src/lib/favorites.ts`)
-- `Favorite` Interface mit stopId, stationTitle, lineName, transportType, richtungsId, direction, directionKey, canonicalToward, platform, allowShortTurns
-- Versionierter Container `{ v: 1, favorites: [...], prefs: { depCount?, mode? } }`
-- localStorage CRUD (save/load/add/remove)
-- URL-Serialisierung: lesbare Variante (Query-Params) + kodierte Variante (JSON→Base64URL)
-- URL-Deserialisierung mit Priorität: kodiert > lesbar > localStorage
-- Standardwert-Logik: depCount=3, mode=direct werden bei Linkgenerierung weggelassen
+## Konzept
+- Ein **"Bearbeiten"-Button** in der Favoritenansicht-Toolbar (neben Refresh)
+- Im Bearbeiten-Modus erscheinen pro Favorit:
+  - **Pfeil hoch / Pfeil runter** zum Umsortieren innerhalb einer Station (itemOrder)
+  - **Pfeil hoch / Pfeil runter** am Stationsblock-Header zum Umsortieren der Stationen (stationOrder)
+  - **Löschen-Button** (Trash-Icon) -- nur im Bearbeiten-Modus sichtbar
+- Im Normalmodus: kein Trash-Icon, keine Pfeile -- nur die Abfahrtsdaten
 
-### 2. React Context (`src/providers/FavoritesContext.tsx`)
-- State: favorites[], prefs, isFavorite(), toggleFavorite(), generateReadableUrl(), generateEncodedUrl()
-- URL-Parsing beim App-Start
+## Änderungen
 
-### 3. UI-Änderungen
-- **Stern-Button** in `LineGroupCard` pro Richtungsblock
-- **Kurzführungs-Badge** in `DepartureRow` ("Kurz" Badge wenn towards ≠ canonicalToward)
-- **Favoritenansicht** als Tab/Ansicht: nur favorisierte Richtungsblöcke, gruppiert nach Station
-- **Link-Generierung UI**: beide Varianten anzeigen mit Copy-Buttons
+### 1. FavoritesContext erweitern (`src/providers/FavoritesContext.tsx`)
+- Neue Funktionen `moveStation(stopId, direction: 'up'|'down')` und `moveItem(directionKey, direction: 'up'|'down')` hinzufügen
+- `moveStation`: tauscht `stationOrder` zwischen zwei benachbarten Stationsgruppen
+- `moveItem`: tauscht `itemOrder` zwischen zwei benachbarten Einträgen derselben Station
 
-### 4. Favoritenansicht-Logik
-- Alle benötigten stopIds sammeln
-- API-Aufrufe gruppiert pro Station
-- Clientseitig nach directionKey filtern
-- depCount Abfahrten anzeigen
-- Kurzführungen markieren
+### 2. FavoritesView umbauen (`src/components/FavoritesView.tsx`)
+- Neuer State `editMode: boolean` (default false)
+- Toggle-Button "Bearbeiten" / "Fertig" in der Toolbar
+- Im Bearbeiten-Modus:
+  - Stationsblock-Header: Pfeil hoch/runter Buttons zum Verschieben der gesamten Station
+  - Pro Richtungsfavorit: Pfeil hoch/runter + Trash-Button
+  - Abfahrtsdaten werden ausgeblendet oder komprimiert
+- Im Normalmodus:
+  - Keine Pfeile, kein Trash -- nur Abfahrten wie bisher
 
-## Dateien
-- `src/lib/favorites.ts` (neu)
-- `src/providers/FavoritesContext.tsx` (neu)
-- `src/components/FavoritesStar.tsx` (neu)
-- `src/components/FavoritesView.tsx` (neu)
-- `src/components/ShareLinks.tsx` (neu)
-- `src/components/LineGroupCard.tsx` (ändern - Stern einfügen)
-- `src/components/DepartureRow.tsx` (ändern - Kurz-Badge)
-- `src/pages/Index.tsx` (ändern - Favoritenansicht + URL-Parsing)
-- `src/types/station.ts` (ändern - Departure.towards Feld)
+### 3. Dateien
+| Datei | Aktion |
+|---|---|
+| `src/providers/FavoritesContext.tsx` | `moveStation`, `moveItem` hinzufügen |
+| `src/components/FavoritesView.tsx` | Bearbeiten-Modus mit Pfeilen + bedingtes Löschen |
+
