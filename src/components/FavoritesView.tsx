@@ -6,7 +6,8 @@ import { StationView, LineGroup, Direction } from '@/types/station';
 import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
-import { Star, RefreshCw, Trash2, ChevronUp, ChevronDown, Pencil, Check } from 'lucide-react';
+import { StatusBar } from './StatusBar';
+import { Star, Trash2, ChevronUp, ChevronDown, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 
@@ -22,6 +23,7 @@ export function FavoritesView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string>(new Date().toISOString());
   const boundsCache = useRef<Map<string, any[]>>(new Map());
 
   const depCount = getEffectiveDepCount(prefs);
@@ -56,6 +58,7 @@ export function FavoritesView() {
         newMap.set(stopId, view);
       }
       setStationViews(newMap);
+      setUpdatedAt(new Date().toISOString());
     } catch (e: any) {
       setError(e.message || 'Fehler beim Laden');
     } finally {
@@ -96,12 +99,14 @@ export function FavoritesView() {
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditMode(!editMode)}>
           {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
         </Button>
-        {!editMode && (
-          <Button variant="ghost" size="sm" onClick={loadFavorites} disabled={loading}>
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-        )}
       </div>
+      {!editMode && (
+        <StatusBar
+          updatedAt={updatedAt}
+          refreshInterval={30}
+          onRefresh={loadFavorites}
+        />
+      )}
 
       {error && (
         <div className="px-4 py-3">
