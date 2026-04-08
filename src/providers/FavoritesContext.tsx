@@ -104,15 +104,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       const idx = sameStop.findIndex(f => f.directionKey === directionKey);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= sameStop.length) return prev;
-      const orderA = sameStop[idx].itemOrder;
-      const orderB = sameStop[swapIdx].itemOrder;
-      const swapKey = sameStop[swapIdx].directionKey;
+
+      // Normalize to sequential, then swap
+      const normalized = sameStop.map((f, i) => ({ key: f.directionKey, order: i }));
+      const tmpOrder = normalized[idx].order;
+      normalized[idx].order = normalized[swapIdx].order;
+      normalized[swapIdx].order = tmpOrder;
+
+      const orderMap = new Map(normalized.map(n => [n.key, n.order]));
       return {
         ...prev,
         favorites: prev.favorites.map(f => {
-          if (f.directionKey === directionKey) return { ...f, itemOrder: orderB };
-          if (f.directionKey === swapKey) return { ...f, itemOrder: orderA };
-          return f;
+          const newOrder = orderMap.get(f.directionKey);
+          return newOrder !== undefined ? { ...f, itemOrder: newOrder } : f;
         }),
       };
     });
