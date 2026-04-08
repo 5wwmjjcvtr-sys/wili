@@ -76,9 +76,10 @@ export function FavoritesView() {
     );
   }
 
-  // Group favorites by station
+  // Group favorites by station, sorted by stationOrder then itemOrder
+  const sortedFavorites = [...favorites].sort((a, b) => a.stationOrder - b.stationOrder || a.itemOrder - b.itemOrder);
   const groupedByStation = new Map<string, Favorite[]>();
-  for (const fav of favorites) {
+  for (const fav of sortedFavorites) {
     const existing = groupedByStation.get(fav.stopId) || [];
     existing.push(fav);
     groupedByStation.set(fav.stopId, existing);

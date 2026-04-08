@@ -11,6 +11,8 @@ export interface Favorite {
   canonicalToward: string;
   platform?: string;
   allowShortTurns: boolean;
+  stationOrder: number;
+  itemOrder: number;
 }
 
 export interface FavoritesPrefs {
@@ -52,11 +54,11 @@ export function buildDirectionKey(lineName: string, richtungsId: string, directi
 
 // ─── URL Serialization ───
 
-// Readable URL: ?fav=stopId:lineName:richtungsId:direction:canonicalToward:transportType[:platform]&...
+// Readable URL: ?fav=stopId:lineName:richtungsId:direction:canonicalToward:transportType:stationOrder:itemOrder[:platform]&...
 export function toReadableUrl(container: FavoritesContainer, baseUrl: string): string {
   const url = new URL(baseUrl);
   for (const f of container.favorites) {
-    const parts = [f.stopId, f.lineName, f.richtungsId, f.direction, f.canonicalToward, f.transportType];
+    const parts = [f.stopId, f.lineName, f.richtungsId, f.direction, f.canonicalToward, f.transportType, String(f.stationOrder), String(f.itemOrder)];
     if (f.platform) parts.push(f.platform);
     url.searchParams.append('fav', parts.join(':'));
   }
@@ -74,12 +76,12 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   const favParams = url.searchParams.getAll('fav');
   if (favParams.length === 0) return null;
 
-  const favorites: Favorite[] = favParams.map(param => {
+  const favorites: Favorite[] = favParams.map((param, index) => {
     const parts = param.split(':');
-    const [stopId, lineName, richtungsId, direction, canonicalToward, transportType, platform] = parts;
+    const [stopId, lineName, richtungsId, direction, canonicalToward, transportType, stationOrderStr, itemOrderStr, platform] = parts;
     return {
       stopId,
-      stationTitle: '', // not stored in readable URL
+      stationTitle: '',
       lineName,
       transportType: (transportType || 'bus') as LineType,
       richtungsId,
@@ -88,6 +90,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
       canonicalToward,
       platform: platform || undefined,
       allowShortTurns: true,
+      stationOrder: parseInt(stationOrderStr, 10) || index,
+      itemOrder: parseInt(itemOrderStr, 10) || index,
     };
   });
 
@@ -111,6 +115,8 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
       d: f.direction,
       c: f.canonicalToward,
       t: f.transportType,
+      o: f.stationOrder,
+      i: f.itemOrder,
       ...(f.platform ? { p: f.platform } : {}),
     })),
     ...(Object.keys(container.prefs).length > 0 ? {
@@ -141,7 +147,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     const compact = JSON.parse(json);
     if (compact?.v !== 1) return null;
 
-    const favorites: Favorite[] = (compact.f || []).map((f: any) => ({
+    const favorites: Favorite[] = (compact.f || []).map((f: any, index: number) => ({
       stopId: f.s,
       stationTitle: '',
       lineName: f.l,
@@ -152,6 +158,8 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
       canonicalToward: f.c,
       platform: f.p || undefined,
       allowShortTurns: true,
+      stationOrder: f.o ?? index,
+      itemOrder: f.i ?? index,
     }));
 
     const prefs: FavoritesPrefs = {};
