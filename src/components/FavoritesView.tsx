@@ -126,6 +126,7 @@ export function FavoritesView() {
                 {view?.stationInfrastructure?.hasElevatorIssue && (
                   <span className="text-base" title="Aufzugsstörung">🛗</span>
                 )}
+              </div>
               {favs.map((fav, itemIdx) => {
                 const lineBadgeStyle = fav.transportType === 'metro' && UBAHN_COLORS[fav.lineName]
                   ? { backgroundColor: UBAHN_COLORS[fav.lineName] }
