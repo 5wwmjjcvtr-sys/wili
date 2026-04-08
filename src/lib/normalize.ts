@@ -1,4 +1,4 @@
-import { LineType, LineGroup, Alert, StationView, Direction, Departure } from '@/types/station';
+import { LineType, LineGroup, Alert, StationView, Direction, Departure, ElevatorMessage, StationInfrastructure } from '@/types/station';
 
 function vehicleTypeToLineType(type: string): LineType {
   if (type === 'ptMetro') return 'metro';
