@@ -64,9 +64,10 @@ function MonitorApp() {
     boundsRef.current = [];
     setStationView(null);
     fetchStation(stop.stopId);
-    fetchScheduleBounds(stop.stopId).then((bounds) => {
+    const selectedStopId = stop.stopId;
+    fetchScheduleBounds(selectedStopId).then((bounds) => {
       boundsRef.current = bounds;
-      setStationView((prev) => prev ? mergeScheduleBounds(prev, bounds) : prev);
+      setStationView((prev) => prev && stopRef.current === selectedStopId ? mergeScheduleBounds(prev, bounds) : prev);
     });
   }, [fetchStation]);
 

@@ -10,6 +10,9 @@ interface Props {
 export function StatusBar({ updatedAt, refreshInterval, onRefresh }: Props) {
   const [countdown, setCountdown] = useState(refreshInterval);
 
+  // Note: onRefresh must be wrapped in useCallback by the parent to avoid
+  // unnecessary interval restarts. refreshInterval is intentionally in the
+  // dependency array so the interval resets when the interval duration changes.
   useEffect(() => {
     setCountdown(refreshInterval);
     const interval = setInterval(() => {

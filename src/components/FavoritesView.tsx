@@ -36,14 +36,16 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
     const stopIds = [...new Set(favorites.map(f => f.stopId))];
 
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         stopIds.map(async (stopId) => {
           const view = await provider.getStationView(stopId);
           if (!boundsCache.current.has(stopId)) {
             try {
               const bounds = await fetchScheduleBounds(stopId);
               boundsCache.current.set(stopId, bounds);
-            } catch {}
+            } catch (e) {
+              console.error('fetchScheduleBounds failed:', e);
+            }
           }
           const cached = boundsCache.current.get(stopId);
           const merged = cached ? mergeScheduleBounds(view, cached) : view;
@@ -52,8 +54,11 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
       );
 
       const newMap = new Map<string, StationView>();
-      for (const [stopId, view] of results) {
-        newMap.set(stopId, view);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const [stopId, view] = result.value;
+          newMap.set(stopId, view);
+        }
       }
       setStationViews(newMap);
       setUpdatedAt(new Date().toISOString());
@@ -175,7 +180,7 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
                                 <div className="space-y-1">
                                   {matchingDepartures.map((dep, i) => (
                                     <DepartureRow
-                                      key={i}
+                                      key={`${dep.departure.timePlanned}_${dep.departure.countdown}_${i}`}
                                       departure={dep.departure}
                                       isShortTurn={dep.isShort}
                                       shortTurnTowards={dep.towards}

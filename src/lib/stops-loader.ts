@@ -59,6 +59,7 @@ export async function loadStops(): Promise<SearchResult[]> {
       return cachedStops;
     })
     .catch(err => {
+      console.error('stops-loader fetch failed:', err);
       loadPromise = null;
       throw err;
     });
@@ -118,6 +119,7 @@ export async function loadRblMapping(): Promise<Map<string, string[]>> {
     rblMap = result;
     return result;
   })().catch(err => {
+    console.error('stops-loader fetch failed:', err);
     rblPromise = null;
     throw err;
   });

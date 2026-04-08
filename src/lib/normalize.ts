@@ -82,10 +82,6 @@ export function normalizeMonitorResponse(
         dirEntry.departures.push(departure);
       }
 
-      // Process traffic info from the line
-      for (const trafficInfo of line.trafficjam ? [] : (monitor?.trafficInfos ?? [])) {
-        // handled below
-      }
     }
 
     // Process traffic infos at monitor level
