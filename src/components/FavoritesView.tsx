@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFavorites } from '@/providers/FavoritesContext';
 import { useDataProvider } from '@/providers/ProviderContext';
-import { Favorite, isShortTurn, getEffectiveDepCount } from '@/lib/favorites';
-import { StationView, LineGroup, Direction } from '@/types/station';
+import { Favorite, isShortTurn, getEffectiveDepCount, getEffectiveRefreshInterval } from '@/lib/favorites';
+import { StationView, LineGroup, Direction, ScheduleBounds } from '@/types/station';
 import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
@@ -17,7 +17,7 @@ const UBAHN_COLORS: Record<string, string> = {
 };
 
 export function FavoritesView() {
-  const { favorites, prefs, removeFavorite, moveStation, moveItem } = useFavorites();
+  const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
   const { provider } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -94,7 +94,7 @@ export function FavoritesView() {
       {!editMode && (
         <StatusBar
           updatedAt={updatedAt}
-          refreshInterval={30}
+          refreshInterval={refreshInterval}
           onRefresh={loadFavorites}
         />
       )}
@@ -172,21 +172,32 @@ export function FavoritesView() {
                       <div className="px-3 py-2.5">
                         {(() => {
                           const matchingDepartures = findMatchingDepartures(view, fav, depCount);
-                          return matchingDepartures.length > 0 ? (
-                            <div className="space-y-1">
-                              {matchingDepartures.map((dep, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                  <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
-                                  {dep.isShort && dep.towards && (
-                                    <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
-                                  )}
+                          const bounds = findScheduleBounds(view, fav);
+                          return (
+                            <>
+                              {matchingDepartures.length > 0 ? (
+                                <div className="space-y-1">
+                                  {matchingDepartures.map((dep, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <DepartureRow departure={dep.departure} isShortTurn={dep.isShort} />
+                                      {dep.isShort && dep.towards && (
+                                        <span className="text-[10px] text-muted-foreground truncate">→ {dep.towards}</span>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          ) : view ? (
-                            <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">Laden…</p>
+                              ) : view ? (
+                                <p className="text-xs text-muted-foreground">Keine Abfahrten</p>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">Laden…</p>
+                              )}
+                              {bounds && (
+                                <div className="flex gap-4 mt-1.5 pt-1.5 border-t border-border/50 text-xs text-muted-foreground">
+                                  <span>Erste Fahrt: <span className="font-mono">{bounds.firstDeparturePlanned || '–'}</span></span>
+                                  <span>Letzte Fahrt: <span className="font-mono">{bounds.lastDeparturePlanned || '–'}</span></span>
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
                       </div>
@@ -253,4 +264,20 @@ function findMatchingDepartures(
 
   results.sort((a, b) => a.departure.countdown - b.departure.countdown);
   return results.slice(0, depCount);
+}
+
+function findScheduleBounds(
+  view: StationView | undefined,
+  fav: Favorite
+): ScheduleBounds | undefined {
+  if (!view) return undefined;
+
+  for (const lg of view.lineGroups) {
+    if (lg.name !== fav.lineName) continue;
+    for (const dir of lg.directions) {
+      if (dir.directionId !== fav.richtungsId) continue;
+      if (dir.scheduleBounds) return dir.scheduleBounds;
+    }
+  }
+  return undefined;
 }

@@ -18,6 +18,7 @@ export interface Favorite {
 export interface FavoritesPrefs {
   depCount?: number; // default 3
   mode?: 'direct' | 'proxy'; // default 'direct'
+  refreshInterval?: number; // default 30
 }
 
 export interface FavoritesContainer {
@@ -27,7 +28,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct' };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30 };
 
 // ─── LocalStorage ───
 
@@ -69,6 +70,9 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.mode && container.prefs.mode !== DEFAULTS.mode) {
     url.searchParams.set('m', container.prefs.mode);
   }
+  if (container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
+    url.searchParams.set('r', String(container.prefs.refreshInterval));
+  }
   return url.toString();
 }
 
@@ -100,6 +104,8 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (n) prefs.depCount = parseInt(n, 10);
   const m = url.searchParams.get('m');
   if (m === 'direct' || m === 'proxy') prefs.mode = m;
+  const r = url.searchParams.get('r');
+  if (r) prefs.refreshInterval = parseInt(r, 10);
 
   return { v: 1, favorites, prefs };
 }
@@ -123,6 +129,7 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
       p: {
         ...(container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount ? { n: container.prefs.depCount } : {}),
         ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
+        ...(container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
       }
     } : {}),
   };
@@ -165,6 +172,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     const prefs: FavoritesPrefs = {};
     if (compact.p?.n) prefs.depCount = compact.p.n;
     if (compact.p?.m) prefs.mode = compact.p.m;
+    if (compact.p?.r) prefs.refreshInterval = compact.p.r;
 
     return { v: 1, favorites, prefs };
   } catch {
@@ -183,6 +191,10 @@ export function getEffectiveDepCount(prefs: FavoritesPrefs): number {
 
 export function getEffectiveMode(prefs: FavoritesPrefs): 'direct' | 'proxy' {
   return prefs.mode ?? DEFAULTS.mode;
+}
+
+export function getEffectiveRefreshInterval(prefs: FavoritesPrefs): number {
+  return prefs.refreshInterval ?? DEFAULTS.refreshInterval;
 }
 
 // Check if a departure is a short turn (towards differs from canonical)

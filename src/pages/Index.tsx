@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataProviderWrapper, useDataProvider } from '@/providers/ProviderContext';
-import { FavoritesProvider } from '@/providers/FavoritesContext';
+import { FavoritesProvider, useFavorites } from '@/providers/FavoritesContext';
 import { StationSearch } from '@/components/StationSearch';
 import { StatusBar } from '@/components/StatusBar';
 import { AlertsSection } from '@/components/AlertsSection';
@@ -11,12 +11,13 @@ import { SearchResult, StationView } from '@/types/station';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 import { Star, Search, Settings } from 'lucide-react';
 
-const REFRESH_INTERVAL = 30;
+
 
 type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
+  const { refreshInterval } = useFavorites();
   const [selectedStop, setSelectedStop] = useState<SearchResult | null>(null);
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -137,7 +138,7 @@ function MonitorApp() {
             <>
               <StatusBar
                 updatedAt={stationView.updatedAt}
-                refreshInterval={REFRESH_INTERVAL}
+                refreshInterval={refreshInterval}
                 onRefresh={handleRefresh}
               />
               <AlertsSection alerts={stationView.alerts} />

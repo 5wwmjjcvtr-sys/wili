@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
-  toReadableUrl, toEncodedUrl, buildDirectionKey,
+  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
@@ -14,6 +14,8 @@ interface FavoritesContextValue {
   moveStation: (stopId: string, direction: 'up' | 'down') => void;
   moveItem: (directionKey: string, direction: 'up' | 'down') => void;
   setDepCount: (n: number) => void;
+  setRefreshInterval: (n: number) => void;
+  refreshInterval: number;
   generateReadableUrl: () => string;
   generateEncodedUrl: () => string;
   hasFavorites: boolean;
@@ -126,6 +128,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, depCount: n } }));
   }, []);
 
+  const setRefreshInterval = useCallback((n: number) => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, refreshInterval: n } }));
+  }, []);
+
   const generateReadableUrl = useCallback(() => {
     const base = window.location.origin + window.location.pathname;
     return toReadableUrl(container, base);
@@ -135,6 +141,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     const base = window.location.origin + window.location.pathname;
     return toEncodedUrl(container, base);
   }, [container]);
+
+  const refreshInterval = getEffectiveRefreshInterval(container.prefs);
 
   return (
     <FavoritesContext.Provider value={{
@@ -146,6 +154,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       moveStation,
       moveItem,
       setDepCount,
+      setRefreshInterval,
+      refreshInterval,
       generateReadableUrl,
       generateEncodedUrl,
       hasFavorites: container.favorites.length > 0,
