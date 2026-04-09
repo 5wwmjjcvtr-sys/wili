@@ -206,6 +206,12 @@ Deno.serve(async (req) => {
 
     for (const [, e] of lineMap) {
       for (const [, d] of e.directions) {
+        const seen = new Set<string>();
+        d.departures = d.departures.filter((dep: any) => {
+          if (seen.has(dep.timePlanned)) return false;
+          seen.add(dep.timePlanned);
+          return true;
+        });
         d.departures.sort((a: any, b: any) => a.countdown - b.countdown);
         d.departures = d.departures.slice(0, 10);
       }

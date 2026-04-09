@@ -19,8 +19,14 @@ export function mergeShortTurns(view: StationView): StationView {
           combined.push({ ...dep, shortTurnTowards: short.towards });
         }
       }
-      combined.sort((a, b) => a.countdown - b.countdown);
-      merged.push({ ...main, departures: combined.slice(0, 10) });
+      const seen = new Set<string>();
+      const deduped = combined.filter(d => {
+        if (seen.has(d.timePlanned)) return false;
+        seen.add(d.timePlanned);
+        return true;
+      });
+      deduped.sort((a, b) => a.countdown - b.countdown);
+      merged.push({ ...main, departures: deduped.slice(0, 10) });
     }
     return { ...group, directions: merged };
   });
@@ -181,9 +187,16 @@ export function normalizeMonitorResponse(
     }
   }
 
-  // Sort departures within each direction and limit to 10
+  // Deduplicate, sort and limit departures per direction
   for (const [, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
+      const seen = new Set<string>();
+      dir.departures = dir.departures.filter(d => {
+        const key = d.timePlanned;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       dir.departures.sort((a, b) => a.countdown - b.countdown);
       dir.departures = dir.departures.slice(0, 10);
     }
