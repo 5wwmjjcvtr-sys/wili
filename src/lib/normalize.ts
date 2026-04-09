@@ -125,6 +125,35 @@ export function normalizeMonitorResponse(
     elevatorMessages,
   };
 
+  // Merge short-turn directions into their main direction (same directionId, different towards)
+  for (const [, lineEntry] of lineMap) {
+    const byDirectionId = new Map<string, string[]>();
+    for (const [dirKey, dir] of lineEntry.directions) {
+      const keys = byDirectionId.get(dir.directionId) ?? [];
+      keys.push(dirKey);
+      byDirectionId.set(dir.directionId, keys);
+    }
+    for (const [, dirKeys] of byDirectionId) {
+      if (dirKeys.length <= 1) continue;
+      // Main direction = most departures
+      let mainKey = dirKeys[0];
+      for (const key of dirKeys.slice(1)) {
+        if ((lineEntry.directions.get(key)?.departures.length ?? 0) > (lineEntry.directions.get(mainKey)?.departures.length ?? 0)) {
+          mainKey = key;
+        }
+      }
+      const mainDir = lineEntry.directions.get(mainKey)!;
+      for (const key of dirKeys) {
+        if (key === mainKey) continue;
+        const shortDir = lineEntry.directions.get(key)!;
+        for (const dep of shortDir.departures) {
+          mainDir.departures.push({ ...dep, shortTurnTowards: shortDir.towards });
+        }
+        lineEntry.directions.delete(key);
+      }
+    }
+  }
+
   // Sort departures within each direction and limit to 10
   for (const [, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
