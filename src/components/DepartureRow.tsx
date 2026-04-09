@@ -40,7 +40,9 @@ export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props
       </span>
 
       <span className="font-mono font-semibold text-foreground text-right">
-        {departure.countdown <= 0 ? '*' : `${departure.countdown}'`}
+        {departure.countdown <= 0
+          ? <span className="animate-dance">*</span>
+          : `${departure.countdown}'`}
       </span>
 
       <span className="text-muted-foreground text-xs tabular-nums">
