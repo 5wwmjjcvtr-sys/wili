@@ -1,4 +1,4 @@
-import type { LineType } from '@/types/station';
+import type { LineType, StationView } from '@/types/station';
 
 // ─── Konfiguration (zentral anpassbar) ───────────────────────────────────────
 
@@ -140,4 +140,35 @@ export function filterPhantomDepartures<T extends FilterableDeparture>(
   }
 
   return result;
+}
+
+/**
+ * Wendet den Phantom-Filter auf eine bereits normalisierte StationView an.
+ * Wird im ProxyProvider-Pfad (Supabase) verwendet, wo normalizeMonitorResponse
+ * nicht durchläuft. onStop wird aus countdown ≤ 0 abgeleitet.
+ */
+export function filterStationViewPhantoms(view: StationView): StationView {
+  return {
+    ...view,
+    lineGroups: view.lineGroups.map(group => ({
+      ...group,
+      directions: group.directions.map(dir => {
+        const depsWithOnStop = dir.departures.map(dep => ({
+          ...dep,
+          onStop: dep.countdown <= 0,
+        }));
+        const ctx: PhantomFilterContext = {
+          stationTitle: view.station.title,
+          lineName: group.name,
+          towards: dir.towards,
+          platform: dir.platform ?? '',
+        };
+        const filtered = filterPhantomDepartures(depsWithOnStop, group.type, view.updatedAt, ctx);
+        return {
+          ...dir,
+          departures: filtered.map(({ onStop: _onStop, ...d }) => d),
+        };
+      }),
+    })),
+  };
 }
