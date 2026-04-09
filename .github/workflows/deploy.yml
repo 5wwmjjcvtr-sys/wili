@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages and Netlify
 
 on:
   push:
@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +26,7 @@ jobs:
 
       - run: npm install
 
-      - name: Build
+      - name: Build for GitHub Pages
         run: npm run build
         env:
           VITE_SUPABASE_URL: https://udtsqklwrsrmwyeriizu.supabase.co
@@ -42,5 +39,23 @@ jobs:
         with:
           path: dist
 
+      - name: Build for Netlify
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /
+          VITE_SUPABASE_URL: https://udtsqklwrsrmwyeriizu.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkdHNxa2x3cnNybXd5ZXJpaXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDI0OTYsImV4cCI6MjA5MTIxODQ5Nn0.FkigjybMiRgfUd4sWNGAR9eOZUOVImlNnQElNJRrfOk
+          VITE_SUPABASE_PROJECT_ID: udtsqklwrsrmwyeriizu
+
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir=dist --site=${{ secrets.NETLIFY_SITE_ID }} --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+  deploy-pages:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/deploy-pages@v4
         id: deployment
