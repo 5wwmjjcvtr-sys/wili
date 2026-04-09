@@ -296,7 +296,8 @@ function findMatchingDepartures(
       for (const dep of dir.departures) {
         canonical.push({
           departure: dep,
-          isShort: false,
+          isShort: !!dep.shortTurnTowards,
+          towards: dep.shortTurnTowards,
         });
       }
     }
