@@ -39,7 +39,15 @@ function MonitorApp() {
           setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
         }
       } else {
-        setLastApiUrl('');
+        const { loadRblMapping } = await import('@/lib/stops-loader');
+        const rblMap = await loadRblMapping();
+        const rbls = rblMap.get(stopId) ?? [];
+        if (rbls.length > 0) {
+          const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
+          setLastApiUrl(`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`);
+        } else {
+          setLastApiUrl('');
+        }
       }
 
       const view = await provider.getStationView(stopId);
