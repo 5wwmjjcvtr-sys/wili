@@ -1,6 +1,7 @@
 import { StationViewProvider } from './types';
 import { SearchResult, StationView } from '@/types/station';
 import { supabase } from '@/integrations/supabase/client';
+import { mergeShortTurns } from '@/lib/normalize';
 
 export class ProxyProvider implements StationViewProvider {
   async searchStops(query: string): Promise<SearchResult[]> {
@@ -16,6 +17,6 @@ export class ProxyProvider implements StationViewProvider {
       body: { stopId },
     });
     if (error) throw new Error(`Proxy station-view error: ${error.message}`);
-    return { ...data, mode: 'proxy' };
+    return mergeShortTurns({ ...data, mode: 'proxy' });
   }
 }

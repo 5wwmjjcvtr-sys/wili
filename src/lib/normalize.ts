@@ -1,5 +1,38 @@
 import { LineType, LineGroup, Alert, StationView, Direction, Departure, ElevatorMessage, StationInfrastructure } from '@/types/station';
 
+export function mergeShortTurns(view: StationView): StationView {
+  const lineGroups = view.lineGroups.map((group) => {
+    const byDirectionId = new Map<string, Direction[]>();
+    for (const dir of group.directions) {
+      const list = byDirectionId.get(dir.directionId) ?? [];
+      list.push(dir);
+      byDirectionId.set(dir.directionId, list);
+    }
+    const merged: Direction[] = [];
+    for (const [, dirs] of byDirectionId) {
+      if (dirs.length === 1) { merged.push(dirs[0]); continue; }
+      const main = dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
+      const combined: Departure[] = [...main.departures];
+      for (const short of dirs) {
+        if (short === main) continue;
+        for (const dep of short.departures) {
+          combined.push({ ...dep, shortTurnTowards: short.towards });
+        }
+      }
+      const seen = new Set<string>();
+      const deduped = combined.filter(d => {
+        if (seen.has(d.timePlanned)) return false;
+        seen.add(d.timePlanned);
+        return true;
+      });
+      deduped.sort((a, b) => a.countdown - b.countdown);
+      merged.push({ ...main, departures: deduped.slice(0, 10) });
+    }
+    return { ...group, directions: merged };
+  });
+  return { ...view, lineGroups };
+}
+
 function vehicleTypeToLineType(type: string): LineType {
   if (type === 'ptMetro') return 'metro';
   if (type === 'ptTram' || type === 'ptTramWLB') return 'tram';
@@ -82,10 +115,6 @@ export function normalizeMonitorResponse(
         dirEntry.departures.push(departure);
       }
 
-      // Process traffic info from the line
-      for (const trafficInfo of line.trafficjam ? [] : (monitor?.trafficInfos ?? [])) {
-        // handled below
-      }
     }
 
     // Process traffic infos at monitor level
@@ -129,9 +158,45 @@ export function normalizeMonitorResponse(
     elevatorMessages,
   };
 
-  // Sort departures within each direction and limit to 10
+  // Merge short-turn directions into their main direction (same directionId, different towards)
+  for (const [, lineEntry] of lineMap) {
+    const byDirectionId = new Map<string, string[]>();
+    for (const [dirKey, dir] of lineEntry.directions) {
+      const keys = byDirectionId.get(dir.directionId) ?? [];
+      keys.push(dirKey);
+      byDirectionId.set(dir.directionId, keys);
+    }
+    for (const [, dirKeys] of byDirectionId) {
+      if (dirKeys.length <= 1) continue;
+      // Main direction = most departures
+      let mainKey = dirKeys[0];
+      for (const key of dirKeys.slice(1)) {
+        if ((lineEntry.directions.get(key)?.departures.length ?? 0) > (lineEntry.directions.get(mainKey)?.departures.length ?? 0)) {
+          mainKey = key;
+        }
+      }
+      const mainDir = lineEntry.directions.get(mainKey)!;
+      for (const key of dirKeys) {
+        if (key === mainKey) continue;
+        const shortDir = lineEntry.directions.get(key)!;
+        for (const dep of shortDir.departures) {
+          mainDir.departures.push({ ...dep, shortTurnTowards: shortDir.towards });
+        }
+        lineEntry.directions.delete(key);
+      }
+    }
+  }
+
+  // Deduplicate, sort and limit departures per direction
   for (const [, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
+      const seen = new Set<string>();
+      dir.departures = dir.departures.filter(d => {
+        const key = d.timePlanned;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       dir.departures.sort((a, b) => a.countdown - b.countdown);
       dir.departures = dir.departures.slice(0, 10);
     }

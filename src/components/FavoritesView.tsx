@@ -18,12 +18,13 @@ const UBAHN_COLORS: Record<string, string> = {
 
 export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
-  const { provider } = useDataProvider();
+  const { provider, showDebugUrl } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string>(new Date().toISOString());
+  const [apiUrls, setApiUrls] = useState<string[]>([]);
   const boundsCache = useRef<Map<string, any[]>>(new Map());
 
   const depCount = getEffectiveDepCount(prefs);
@@ -35,15 +36,29 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
 
     const stopIds = [...new Set(favorites.map(f => f.stopId))];
 
+    if (showDebugUrl) {
+      const { loadRblMapping } = await import('@/lib/stops-loader');
+      const rblMap = await loadRblMapping();
+      const urls = stopIds.flatMap(stopId => {
+        const rbls = rblMap.get(stopId) ?? [];
+        if (rbls.length === 0) return [];
+        const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
+        return [`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`];
+      });
+      setApiUrls(urls);
+    }
+
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         stopIds.map(async (stopId) => {
           const view = await provider.getStationView(stopId);
           if (!boundsCache.current.has(stopId)) {
             try {
               const bounds = await fetchScheduleBounds(stopId);
               boundsCache.current.set(stopId, bounds);
-            } catch {}
+            } catch (e) {
+              console.error('fetchScheduleBounds failed:', e);
+            }
           }
           const cached = boundsCache.current.get(stopId);
           const merged = cached ? mergeScheduleBounds(view, cached) : view;
@@ -52,8 +67,11 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
       );
 
       const newMap = new Map<string, StationView>();
-      for (const [stopId, view] of results) {
-        newMap.set(stopId, view);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const [stopId, view] = result.value;
+          newMap.set(stopId, view);
+        }
       }
       setStationViews(newMap);
       setUpdatedAt(new Date().toISOString());
@@ -175,7 +193,7 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
                                 <div className="space-y-1">
                                   {matchingDepartures.map((dep, i) => (
                                     <DepartureRow
-                                      key={i}
+                                      key={`${dep.departure.timePlanned}_${dep.departure.countdown}_${i}`}
                                       departure={dep.departure}
                                       isShortTurn={dep.isShort}
                                       shortTurnTowards={dep.towards}
@@ -214,7 +232,18 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
       {editMode && <ShareLinks />}
 
       {/* Bottom action buttons */}
-      <div className="px-4 py-3 flex justify-end gap-2">
+      <div className="px-4 py-3 flex items-center justify-between gap-2">
+        {showDebugUrl && apiUrls.length > 0 ? (
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            {apiUrls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                className="text-[10px] font-mono text-primary underline break-all leading-tight block">
+                {url}
+              </a>
+            ))}
+          </div>
+        ) : <span />}
+        <div className="flex shrink-0 gap-2">
         <button
           onClick={() => setEditMode(!editMode)}
           className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
@@ -233,6 +262,7 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
         >
           <Settings className="h-4 w-4" />
         </button>
+        </div>
       </div>
     </div>
   );

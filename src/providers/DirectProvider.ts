@@ -25,7 +25,7 @@ export class DirectProvider implements StationViewProvider {
       const params = rblNumbers.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
       const url = `${MONITOR_URL}?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`Monitor API error: ${res.status}`);
+      if (!res.ok) throw new Error(`Wiener Linien API error: ${res.status} ${res.statusText}`);
       const data = await res.json();
       return normalizeMonitorResponse(data, stopId, 'direct');
     } catch {

@@ -52,9 +52,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       }
       // Auto-assign order: stationOrder = max existing for this stop or next global, itemOrder = count within stop
       const sameStop = prev.favorites.filter(f => f.stopId === fav.stopId);
+      const maxOrder = prev.favorites.length > 0 ? Math.max(...prev.favorites.map(f => f.stationOrder)) : -1;
       const stationOrder = sameStop.length > 0
         ? sameStop[0].stationOrder
-        : (prev.favorites.length > 0 ? Math.max(...prev.favorites.map(f => f.stationOrder)) + 1 : 0);
+        : maxOrder + 1;
       const itemOrder = sameStop.length > 0
         ? Math.max(...sameStop.map(f => f.itemOrder)) + 1
         : 0;

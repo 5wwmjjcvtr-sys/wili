@@ -39,7 +39,15 @@ function MonitorApp() {
           setLastApiUrl(`Proxy-Fallback (keine RBL für DIVA ${stopId})`);
         }
       } else {
-        setLastApiUrl(`POST station-view { "stopId": "${stopId}" }`);
+        const { loadRblMapping } = await import('@/lib/stops-loader');
+        const rblMap = await loadRblMapping();
+        const rbls = rblMap.get(stopId) ?? [];
+        if (rbls.length > 0) {
+          const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
+          setLastApiUrl(`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`);
+        } else {
+          setLastApiUrl('');
+        }
       }
 
       const view = await provider.getStationView(stopId);
@@ -64,9 +72,10 @@ function MonitorApp() {
     boundsRef.current = [];
     setStationView(null);
     fetchStation(stop.stopId);
-    fetchScheduleBounds(stop.stopId).then((bounds) => {
+    const selectedStopId = stop.stopId;
+    fetchScheduleBounds(selectedStopId).then((bounds) => {
       boundsRef.current = bounds;
-      setStationView((prev) => prev ? mergeScheduleBounds(prev, bounds) : prev);
+      setStationView((prev) => prev && stopRef.current === selectedStopId ? mergeScheduleBounds(prev, bounds) : prev);
     });
   }, [fetchStation]);
 
@@ -112,24 +121,6 @@ function MonitorApp() {
 
       {activeTab === 'search' && (
         <>
-          {showDebugUrl && lastApiUrl && (
-            <div className="px-4 py-1.5 bg-muted/30 border-b border-border">
-              {lastApiUrl.startsWith('http') ? (
-                <a
-                  href={lastApiUrl.split(/\s+/)[0]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-mono text-primary underline break-all leading-tight block"
-                >
-                  {lastApiUrl}
-                </a>
-              ) : (
-                <p className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
-                  {lastApiUrl}
-                </p>
-              )}
-            </div>
-          )}
           <StationSearch onSelect={handleSelect} selectedStation={selectedStop?.name} />
 
           {stationView && (
@@ -189,12 +180,22 @@ function MonitorApp() {
       {activeTab === 'favorites' && <FavoritesView onOpenSettings={() => setActiveTab('settings')} />}
       {activeTab === 'settings' && <SettingsView />}
 
-      {/* Settings button at bottom right - only on search tab */}
+      {/* Bottom bar - only on search tab */}
       {activeTab === 'search' && (
-        <div className="px-4 py-3 flex justify-end">
+        <div className="px-4 py-3 flex items-center justify-between gap-2">
+          {showDebugUrl && lastApiUrl ? (
+            <a
+              href={lastApiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-mono text-primary underline break-all leading-tight flex-1"
+            >
+              {lastApiUrl}
+            </a>
+          ) : <span />}
           <button
             onClick={() => setActiveTab('settings')}
-            className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
+            className="h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
             aria-label="Einstellungen"
           >
             <Settings className="h-4 w-4" />

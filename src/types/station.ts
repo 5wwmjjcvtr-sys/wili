@@ -11,6 +11,7 @@ export interface Departure {
   timeReal?: string;
   isRealtime: boolean;
   isBarrierFree?: boolean;
+  shortTurnTowards?: string;
 }
 
 export interface ScheduleBounds {
