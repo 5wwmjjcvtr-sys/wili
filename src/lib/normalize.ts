@@ -1,5 +1,32 @@
 import { LineType, LineGroup, Alert, StationView, Direction, Departure, ElevatorMessage, StationInfrastructure } from '@/types/station';
 
+export function mergeShortTurns(view: StationView): StationView {
+  const lineGroups = view.lineGroups.map((group) => {
+    const byDirectionId = new Map<string, Direction[]>();
+    for (const dir of group.directions) {
+      const list = byDirectionId.get(dir.directionId) ?? [];
+      list.push(dir);
+      byDirectionId.set(dir.directionId, list);
+    }
+    const merged: Direction[] = [];
+    for (const [, dirs] of byDirectionId) {
+      if (dirs.length === 1) { merged.push(dirs[0]); continue; }
+      const main = dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
+      const combined: Departure[] = [...main.departures];
+      for (const short of dirs) {
+        if (short === main) continue;
+        for (const dep of short.departures) {
+          combined.push({ ...dep, shortTurnTowards: short.towards });
+        }
+      }
+      combined.sort((a, b) => a.countdown - b.countdown);
+      merged.push({ ...main, departures: combined.slice(0, 10) });
+    }
+    return { ...group, directions: merged };
+  });
+  return { ...view, lineGroups };
+}
+
 function vehicleTypeToLineType(type: string): LineType {
   if (type === 'ptMetro') return 'metro';
   if (type === 'ptTram' || type === 'ptTramWLB') return 'tram';
