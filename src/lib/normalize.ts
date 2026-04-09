@@ -1,4 +1,15 @@
 import { LineType, LineGroup, Alert, StationView, Direction, Departure, ElevatorMessage, StationInfrastructure } from '@/types/station';
+import { filterPhantomDepartures, PhantomFilterContext } from './departure-filter';
+
+// ─── Interner Typ (nur während der Normalisierung) ────────────────────────────
+// Ergänzt Departure um onStop, das aus der Roh-API gelesen wird und für den
+// Phantom-Filter benötigt wird. Wird vor der Rückgabe wieder entfernt.
+type BuildDep = Departure & { readonly onStop: boolean };
+
+type BuildDir = Omit<Direction, 'departures'> & { departures: BuildDep[] };
+type BuildLineEntry = { type: LineType; directions: Map<string, BuildDir> };
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function mergeShortTurns(view: StationView): StationView {
   const lineGroups = view.lineGroups.map((group) => {
@@ -64,11 +75,11 @@ export function normalizeMonitorResponse(
   const serverTime = data?.message?.serverTime ?? new Date().toISOString();
 
   let stationTitle = '';
-  const lineMap = new Map<string, { type: LineType; directions: Map<string, Direction> }>();
+  const lineMap = new Map<string, BuildLineEntry>();
   const alertsMap = new Map<string, Alert>();
 
   for (const monitor of monitors) {
-    const stopName = monitor?.locationStop?.properties?.title ?? 
+    const stopName = monitor?.locationStop?.properties?.title ??
                      monitor?.locationStop?.properties?.name ?? '';
     if (!stationTitle && stopName) stationTitle = stopName;
 
@@ -104,17 +115,20 @@ export function normalizeMonitorResponse(
           });
         }
 
-        const dirEntry = lineEntry.directions.get(dirKey)!;
-        const departure: Departure = {
-          countdown: dt.countdown ?? 0,
+        const countdown: number = dt.countdown ?? 0;
+        // onStop: explizites API-Feld, falls vorhanden; sonst aus countdown ≤ 0 ableiten
+        const onStop: boolean = !!(dt.onStop ?? (countdown <= 0));
+
+        const buildDep: BuildDep = {
+          countdown,
           timePlanned: dt.timePlanned ?? '',
           timeReal: dt.timeReal || undefined,
           isRealtime: !!dt.timeReal,
           isBarrierFree: vehicle.barrierFree ?? undefined,
+          onStop,
         };
-        dirEntry.departures.push(departure);
+        lineEntry.directions.get(dirKey)!.departures.push(buildDep);
       }
-
     }
 
     // Process traffic infos at monitor level
@@ -139,7 +153,6 @@ export function normalizeMonitorResponse(
     for (const info of monitor?.trafficInfos ?? []) {
       const name = info?.name ?? '';
       const title = info?.title ?? '';
-      // aufzugsinfo category
       if (
         name.toLowerCase().includes('aufzug') ||
         title.toLowerCase().includes('aufzug') ||
@@ -180,6 +193,7 @@ export function normalizeMonitorResponse(
         if (key === mainKey) continue;
         const shortDir = lineEntry.directions.get(key)!;
         for (const dep of shortDir.departures) {
+          // Spread preserves onStop; shortTurnTowards marks the short-turn destination
           mainDir.departures.push({ ...dep, shortTurnTowards: shortDir.towards });
         }
         lineEntry.directions.delete(key);
@@ -187,9 +201,10 @@ export function normalizeMonitorResponse(
     }
   }
 
-  // Deduplicate, sort and limit departures per direction
-  for (const [, lineEntry] of lineMap) {
+  // Deduplicate, phantom-filter, sort and limit departures per direction
+  for (const [lineName, lineEntry] of lineMap) {
     for (const [, dir] of lineEntry.directions) {
+      // 1. Deduplizieren nach timePlanned
       const seen = new Set<string>();
       dir.departures = dir.departures.filter(d => {
         const key = d.timePlanned;
@@ -197,17 +212,35 @@ export function normalizeMonitorResponse(
         seen.add(key);
         return true;
       });
+
+      // 2. Phantom-Abfahrten herausfiltern
+      const ctx: PhantomFilterContext = {
+        stationTitle,
+        lineName,
+        towards: dir.towards,
+        platform: dir.platform ?? '',
+      };
+      dir.departures = filterPhantomDepartures(dir.departures, lineEntry.type, serverTime, ctx);
+
+      // 3. Sortieren und auf 10 begrenzen
       dir.departures.sort((a, b) => a.countdown - b.countdown);
       dir.departures = dir.departures.slice(0, 10);
     }
   }
 
-  // Build sorted line groups
+  // Build sorted line groups; strip internal onStop field from departures
   const lineGroups: LineGroup[] = Array.from(lineMap.entries())
     .map(([name, entry]) => ({
       type: entry.type,
       name,
-      directions: Array.from(entry.directions.values()),
+      directions: Array.from(entry.directions.values()).map(dir => ({
+        directionId: dir.directionId,
+        towards: dir.towards,
+        platform: dir.platform,
+        isBarrierFree: dir.isBarrierFree,
+        scheduleBounds: dir.scheduleBounds,
+        departures: dir.departures.map(({ onStop: _onStop, ...d }) => d),
+      })),
     }))
     .sort((a, b) => {
       const typeOrder = LINE_TYPE_ORDER[a.type] - LINE_TYPE_ORDER[b.type];
