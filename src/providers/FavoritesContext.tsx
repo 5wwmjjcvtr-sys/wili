@@ -3,7 +3,7 @@ import { useTheme } from 'next-themes';
 import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
-  toReadableUrl, toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval, getEffectiveTheme,
+  toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval, getEffectiveTheme,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
@@ -24,8 +24,7 @@ interface FavoritesContextValue {
   setShowCurrentTime: (v: boolean) => void;
   setShowUpdatedAt: (v: boolean) => void;
   refreshInterval: number;
-  generateReadableUrl: () => string;
-  generateEncodedUrl: () => string;
+  generateShareUrl: () => Promise<string>;
   hasFavorites: boolean;
   editMode: boolean;
   setEditMode: (v: boolean) => void;
@@ -36,12 +35,16 @@ const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [editMode, setEditMode] = useState(false);
-  const [container, setContainer] = useState<FavoritesContainer>(() => {
-    // Priority: URL > localStorage
-    const urlContainer = parseUrlFavorites(new URL(window.location.href));
-    if (urlContainer && urlContainer.favorites.length > 0) return urlContainer;
-    return loadFromStorage();
-  });
+  const [container, setContainer] = useState<FavoritesContainer>(() => loadFromStorage());
+
+  // Async URL-Import beim ersten Mount (parseUrlFavorites ist async wegen Dekomprimierung)
+  useEffect(() => {
+    parseUrlFavorites(new URL(window.location.href)).then(urlContainer => {
+      if (urlContainer && urlContainer.favorites.length > 0) {
+        setContainer(urlContainer);
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist to localStorage on change
   useEffect(() => {
@@ -202,12 +205,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const generateReadableUrl = useCallback(() => {
-    const base = window.location.origin + window.location.pathname;
-    return toReadableUrl(container, base);
-  }, [container]);
-
-  const generateEncodedUrl = useCallback(() => {
+  const generateShareUrl = useCallback(async () => {
     const base = window.location.origin + window.location.pathname;
     return toEncodedUrl(container, base);
   }, [container]);
@@ -233,8 +231,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setShowCurrentTime,
       setShowUpdatedAt,
       refreshInterval,
-      generateReadableUrl,
-      generateEncodedUrl,
+      generateShareUrl,
       hasFavorites: container.favorites.length > 0,
       editMode,
       setEditMode,

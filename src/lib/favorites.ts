@@ -72,177 +72,157 @@ export function buildDirectionKey(stopId: string, lineName: string, richtungsId:
 
 // ─── URL Serialization ───
 
-// Readable URL: ?fav=stopId:lineName:richtungsId:direction:canonicalToward:transportType:stationOrder:itemOrder[:platform]&...
-export function toReadableUrl(container: FavoritesContainer, baseUrl: string): string {
-  const url = new URL(baseUrl);
-  for (const f of container.favorites) {
-    const parts = [f.stopId, f.lineName, f.richtungsId, f.direction, f.canonicalToward, f.transportType, String(f.stationOrder), String(f.itemOrder)];
-    if (f.platform) parts.push(f.platform);
-    url.searchParams.append('fav', parts.join(':'));
+// ─── Transport-Type Kodierung (1 Zeichen) ────────────────────────────────────
+const TYPE_ENC: Record<string, string> = { metro: 'm', tram: 't', bus: 'b', nightline: 'n' };
+const TYPE_DEC: Record<string, LineType> = { m: 'metro', t: 'tram', b: 'bus', n: 'nightline' };
+
+// ─── deflate-raw Komprimierung (CompressionStream, alle modernen Browser) ────
+async function deflateBytes(input: Uint8Array): Promise<string> {
+  const cs = new CompressionStream('deflate-raw');
+  const writer = cs.writable.getWriter();
+  writer.write(input);
+  writer.close();
+  const chunks: Uint8Array[] = [];
+  const reader = cs.readable.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
   }
-  // Only add non-default prefs
-  if (container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount) {
-    url.searchParams.set('n', String(container.prefs.depCount));
-  }
-  if (container.prefs.mode && container.prefs.mode !== DEFAULTS.mode) {
-    url.searchParams.set('m', container.prefs.mode);
-  }
-  if (container.prefs.refreshInterval !== undefined && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
-    url.searchParams.set('r', String(container.prefs.refreshInterval));
-  }
-  if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
-    url.searchParams.set('t', container.prefs.theme);
-  }
-  if (container.prefs.showFirstDep === false) {
-    url.searchParams.set('sf', '0');
-  }
-  if (container.prefs.showLastDep === false) {
-    url.searchParams.set('sl', '0');
-  }
-  if (container.prefs.showTime === false) {
-    url.searchParams.set('st', '0');
-  }
-  if (container.prefs.showTimeDiff === false) {
-    url.searchParams.set('sd', '0');
-  }
-  if (container.prefs.showCurrentTime === false) {
-    url.searchParams.set('sct', '0');
-  }
-  if (container.prefs.showUpdatedAt === false) {
-    url.searchParams.set('sua', '0');
-  }
-  return url.toString();
+  const out = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return btoa(String.fromCharCode(...out)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export function fromReadableUrl(url: URL): FavoritesContainer | null {
-  const favParams = url.searchParams.getAll('fav');
-  if (favParams.length === 0) return null;
-
-  const favorites: Favorite[] = favParams.map((param, index) => {
-    const parts = param.split(':');
-    const [stopId, lineName, richtungsId, direction, canonicalToward, transportType, stationOrderStr, itemOrderStr, platform] = parts;
-    return {
-      stopId,
-      stationTitle: '',
-      lineName,
-      transportType: (transportType || 'bus') as LineType,
-      richtungsId,
-      direction,
-      directionKey: buildDirectionKey(stopId, lineName, richtungsId, direction),
-      canonicalToward,
-      platform: platform || undefined,
-      allowShortTurns: true,
-      stationOrder: parseInt(stationOrderStr, 10) || index,
-      itemOrder: parseInt(itemOrderStr, 10) || index,
-    };
-  });
-
-  const prefs: FavoritesPrefs = {};
-  const n = url.searchParams.get('n');
-  if (n) prefs.depCount = parseInt(n, 10);
-  const m = url.searchParams.get('m');
-  if (m === 'direct' || m === 'proxy') prefs.mode = m;
-  const r = url.searchParams.get('r');
-  if (r) prefs.refreshInterval = parseInt(r, 10);
-  const t = url.searchParams.get('t');
-  if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
-  if (url.searchParams.get('sf') === '0') prefs.showFirstDep = false;
-  if (url.searchParams.get('sl') === '0') prefs.showLastDep = false;
-  if (url.searchParams.get('st') === '0') prefs.showTime = false;
-  if (url.searchParams.get('sd') === '0') prefs.showTimeDiff = false;
-  if (url.searchParams.get('sct') === '0') prefs.showCurrentTime = false;
-  if (url.searchParams.get('sua') === '0') prefs.showUpdatedAt = false;
-
-  return { v: 1, favorites, prefs };
+async function inflateBytes(b64: string): Promise<Uint8Array> {
+  const binary = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  const chunks: Uint8Array[] = [];
+  const reader = ds.readable.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const out = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
 }
 
-// Encoded URL: ?d=<base64url>
-export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): string {
-  const compact = {
-    v: 1,
-    f: container.favorites.map(f => ({
-      s: f.stopId,
-      l: f.lineName,
-      r: f.richtungsId,
-      d: f.direction,
-      c: f.canonicalToward,
-      t: f.transportType,
-      o: f.stationOrder,
-      i: f.itemOrder,
-      ...(f.platform ? { p: f.platform } : {}),
-    })),
-    ...(Object.keys(container.prefs).length > 0 ? {
-      p: {
-        ...(container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount ? { n: container.prefs.depCount } : {}),
-        ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
-        ...(container.prefs.refreshInterval !== undefined && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
-        ...(container.prefs.theme && container.prefs.theme !== DEFAULTS.theme ? { t: container.prefs.theme } : {}),
-        ...(container.prefs.showFirstDep === false ? { sf: false } : {}),
-        ...(container.prefs.showLastDep === false ? { sl: false } : {}),
-        ...(container.prefs.showTime === false ? { st: false } : {}),
-        ...(container.prefs.showTimeDiff === false ? { sd: false } : {}),
-        ...(container.prefs.showCurrentTime === false ? { sct: false } : {}),
-        ...(container.prefs.showUpdatedAt === false ? { sua: false } : {}),
-      }
-    } : {}),
+function buildPrefsCompact(prefs: FavoritesPrefs) {
+  return {
+    ...(prefs.depCount && prefs.depCount !== DEFAULTS.depCount ? { n: prefs.depCount } : {}),
+    ...(prefs.mode && prefs.mode !== DEFAULTS.mode ? { m: prefs.mode } : {}),
+    ...(prefs.refreshInterval !== undefined && prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: prefs.refreshInterval } : {}),
+    ...(prefs.theme && prefs.theme !== DEFAULTS.theme ? { t: prefs.theme } : {}),
+    ...(prefs.showFirstDep === false ? { sf: false } : {}),
+    ...(prefs.showLastDep === false ? { sl: false } : {}),
+    ...(prefs.showTime === false ? { st: false } : {}),
+    ...(prefs.showTimeDiff === false ? { sd: false } : {}),
+    ...(prefs.showCurrentTime === false ? { sct: false } : {}),
+    ...(prefs.showUpdatedAt === false ? { sua: false } : {}),
   };
+}
 
-  // Remove empty prefs
-  if (compact.p && Object.keys(compact.p).length === 0) delete (compact as any).p;
+function parsePrefsCompact(p: any): FavoritesPrefs {
+  const prefs: FavoritesPrefs = {};
+  if (p?.n) prefs.depCount = p.n;
+  if (p?.m) prefs.mode = p.m;
+  if (p?.r !== undefined) prefs.refreshInterval = p.r;
+  if (p?.t) prefs.theme = p.t;
+  if (p?.sf === false) prefs.showFirstDep = false;
+  if (p?.sl === false) prefs.showLastDep = false;
+  if (p?.st === false) prefs.showTime = false;
+  if (p?.sd === false) prefs.showTimeDiff = false;
+  if (p?.sct === false) prefs.showCurrentTime = false;
+  if (p?.sua === false) prefs.showUpdatedAt = false;
+  return prefs;
+}
 
-  const json = JSON.stringify(compact);
-  const encoded = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// Encoded URL: ?d=<compressed-base64url>
+// Format: {"f":[{s,l,r,c,t,d?,p?},...], "p"?:{prefs}}
+export async function toEncodedUrl(container: FavoritesContainer, baseUrl: string): Promise<string> {
+  const sorted = [...container.favorites].sort(
+    (a, b) => a.stationOrder - b.stationOrder || a.itemOrder - b.itemOrder
+  );
+
+  const prefsCompact = buildPrefsCompact(container.prefs);
+  const compact: any = {
+    f: sorted.map(f => {
+      const entry: any = {
+        s: f.stopId,
+        l: f.lineName,
+        r: f.richtungsId,
+        c: f.canonicalToward,
+        t: TYPE_ENC[f.transportType] ?? f.transportType,
+      };
+      if (f.direction !== f.canonicalToward) entry.d = f.direction;
+      if (f.platform) entry.p = f.platform;
+      return entry;
+    }),
+  };
+  if (Object.keys(prefsCompact).length > 0) compact.p = prefsCompact;
+
+  const compressed = await deflateBytes(new TextEncoder().encode(JSON.stringify(compact)));
   const url = new URL(baseUrl);
-  url.searchParams.set('d', encoded);
+  url.searchParams.set('d', compressed);
   return url.toString();
 }
 
-export function fromEncodedUrl(url: URL): FavoritesContainer | null {
+export async function fromEncodedUrl(url: URL): Promise<FavoritesContainer | null> {
   const d = url.searchParams.get('d');
   if (!d) return null;
 
   try {
-    const padded = d.replace(/-/g, '+').replace(/_/g, '/');
-    const json = atob(padded);
-    const compact = JSON.parse(json);
-    if (compact?.v !== 1) return null;
+    const bytes = await inflateBytes(d);
+    const compact = JSON.parse(new TextDecoder().decode(bytes));
+    if (!compact?.f) return null;
 
-    const favorites: Favorite[] = (compact.f || []).map((f: any, index: number) => ({
-      stopId: f.s,
-      stationTitle: '',
-      lineName: f.l,
-      transportType: (f.t || 'bus') as LineType,
-      richtungsId: f.r,
-      direction: f.d,
-      directionKey: buildDirectionKey(f.s, f.l, f.r, f.d),
-      canonicalToward: f.c,
-      platform: f.p || undefined,
-      allowShortTurns: true,
-      stationOrder: f.o ?? index,
-      itemOrder: f.i ?? index,
-    }));
+    const stationOrderMap = new Map<string, number>();
+    const itemCountMap = new Map<string, number>();
+    let nextStation = 0;
 
-    const prefs: FavoritesPrefs = {};
-    if (compact.p?.n) prefs.depCount = compact.p.n;
-    if (compact.p?.m) prefs.mode = compact.p.m;
-    if (compact.p?.r) prefs.refreshInterval = compact.p.r;
-    if (compact.p?.t) prefs.theme = compact.p.t;
-    if (compact.p?.sf === false) prefs.showFirstDep = false;
-    if (compact.p?.sl === false) prefs.showLastDep = false;
-    if (compact.p?.st === false) prefs.showTime = false;
-    if (compact.p?.sd === false) prefs.showTimeDiff = false;
-    if (compact.p?.sct === false) prefs.showCurrentTime = false;
-    if (compact.p?.sua === false) prefs.showUpdatedAt = false;
+    const favorites: Favorite[] = (compact.f || []).map((f: any) => {
+      if (!stationOrderMap.has(f.s)) {
+        stationOrderMap.set(f.s, nextStation++);
+        itemCountMap.set(f.s, 0);
+      }
+      const stationOrder = stationOrderMap.get(f.s)!;
+      const itemOrder = itemCountMap.get(f.s)!;
+      itemCountMap.set(f.s, itemOrder + 1);
 
-    return { v: 1, favorites, prefs };
+      const direction = f.d ?? f.c;
+      const transportType = (TYPE_DEC[f.t] ?? f.t ?? 'bus') as LineType;
+      return {
+        stopId: f.s,
+        stationTitle: '',
+        lineName: f.l,
+        transportType,
+        richtungsId: f.r,
+        direction,
+        directionKey: buildDirectionKey(f.s, f.l, f.r, direction),
+        canonicalToward: f.c,
+        platform: f.p || undefined,
+        allowShortTurns: true,
+        stationOrder,
+        itemOrder,
+      };
+    });
+
+    return { v: 1, favorites, prefs: parsePrefsCompact(compact.p) };
   } catch {
     return null;
   }
 }
 
-// Parse URL with priority: encoded > readable > null
-export function parseUrlFavorites(url: URL): FavoritesContainer | null {
-  return fromEncodedUrl(url) ?? fromReadableUrl(url);
+export async function parseUrlFavorites(url: URL): Promise<FavoritesContainer | null> {
+  return fromEncodedUrl(url);
 }
 
 export function getEffectiveDepCount(prefs: FavoritesPrefs): number {
