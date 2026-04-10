@@ -4,6 +4,7 @@ import {
   Favorite, FavoritesContainer, FavoritesPrefs,
   loadFromStorage, saveToStorage, parseUrlFavorites,
   toEncodedUrl, buildDirectionKey, getEffectiveRefreshInterval, getEffectiveTheme,
+  getEffectiveScheduleBoundsSource,
 } from '@/lib/favorites';
 
 interface FavoritesContextValue {
@@ -23,6 +24,8 @@ interface FavoritesContextValue {
   setShowTimeDiff: (v: boolean) => void;
   setShowCurrentTime: (v: boolean) => void;
   setShowUpdatedAt: (v: boolean) => void;
+  setScheduleBoundsSource: (v: 'supabase' | 'static') => void;
+  scheduleBoundsSource: 'supabase' | 'static';
   refreshInterval: number;
   generateShareUrl: () => Promise<string>;
   hasFavorites: boolean;
@@ -191,6 +194,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, showUpdatedAt: v } }));
   }, []);
 
+  const setScheduleBoundsSource = useCallback((v: 'supabase' | 'static') => {
+    setContainer(prev => ({ ...prev, prefs: { ...prev.prefs, scheduleBoundsSource: v } }));
+  }, []);
+
   const cacheStationTitle = useCallback((stopId: string, title: string) => {
     if (!title) return;
     setContainer(prev => {
@@ -211,6 +218,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, [container]);
 
   const refreshInterval = getEffectiveRefreshInterval(container.prefs);
+  const scheduleBoundsSource = getEffectiveScheduleBoundsSource(container.prefs);
 
   return (
     <FavoritesContext.Provider value={{
@@ -230,6 +238,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setShowTimeDiff,
       setShowCurrentTime,
       setShowUpdatedAt,
+      setScheduleBoundsSource,
+      scheduleBoundsSource,
       refreshInterval,
       generateShareUrl,
       hasFavorites: container.favorites.length > 0,

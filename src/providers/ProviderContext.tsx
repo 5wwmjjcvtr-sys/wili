@@ -21,7 +21,7 @@ const directProvider = new DirectProvider();
 const proxyProvider = new ProxyProvider();
 
 export function DataProviderWrapper({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<DataMode>('proxy');
+  const [mode, setMode] = useState<DataMode>('direct');
   const [showDebugUrl, setShowDebugUrl] = useState(true);
   const [lastApiUrl, setLastApiUrl] = useState<string | null>(null);
   const provider = useMemo(() => (mode === 'direct' ? directProvider : proxyProvider), [mode]);

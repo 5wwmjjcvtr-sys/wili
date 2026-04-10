@@ -15,12 +15,12 @@ type AppTab = 'search' | 'favorites' | 'settings';
 
 function MonitorApp() {
   const { provider, mode, showDebugUrl, lastApiUrl, setLastApiUrl } = useDataProvider();
-  const { refreshInterval } = useFavorites();
+  const { refreshInterval, scheduleBoundsSource, hasFavorites } = useFavorites();
   const [selectedStop, setSelectedStop] = useState<SearchResult | null>(null);
   const [stationView, setStationView] = useState<StationView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<AppTab>('favorites');
+  const [activeTab, setActiveTab] = useState<AppTab>(hasFavorites ? 'favorites' : 'search');
   const stopRef = useRef<string | null>(null);
   const boundsRef = useRef<any[]>([]);
 
@@ -73,11 +73,11 @@ function MonitorApp() {
     setStationView(null);
     fetchStation(stop.stopId);
     const selectedStopId = stop.stopId;
-    fetchScheduleBounds(selectedStopId).then((bounds) => {
+    fetchScheduleBounds(selectedStopId, scheduleBoundsSource).then((bounds) => {
       boundsRef.current = bounds;
       setStationView((prev) => prev && stopRef.current === selectedStopId ? mergeScheduleBounds(prev, bounds) : prev);
     });
-  }, [fetchStation]);
+  }, [fetchStation, scheduleBoundsSource]);
 
   const handleRefresh = useCallback(() => {
     if (stopRef.current) {

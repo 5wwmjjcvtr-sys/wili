@@ -26,6 +26,7 @@ export interface FavoritesPrefs {
   showTimeDiff?: boolean; // default true
   showCurrentTime?: boolean; // default true
   showUpdatedAt?: boolean; // default true
+  scheduleBoundsSource?: 'supabase' | 'static'; // default 'static'
 }
 
 export interface FavoritesContainer {
@@ -35,7 +36,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system', showFirstDep: true, showLastDep: true, showTime: true, showTimeDiff: true, showCurrentTime: true, showUpdatedAt: true };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system', showFirstDep: true, showLastDep: true, showTime: true, showTimeDiff: true, showCurrentTime: true, showUpdatedAt: true, scheduleBoundsSource: 'static' };
 
 // ─── LocalStorage ───
 
@@ -127,6 +128,7 @@ function buildPrefsCompact(prefs: FavoritesPrefs) {
     ...(prefs.showTimeDiff === false ? { sd: false } : {}),
     ...(prefs.showCurrentTime === false ? { sct: false } : {}),
     ...(prefs.showUpdatedAt === false ? { sua: false } : {}),
+    ...(prefs.scheduleBoundsSource && prefs.scheduleBoundsSource !== DEFAULTS.scheduleBoundsSource ? { sbs: prefs.scheduleBoundsSource } : {}),
   };
 }
 
@@ -142,6 +144,7 @@ function parsePrefsCompact(p: any): FavoritesPrefs {
   if (p?.sd === false) prefs.showTimeDiff = false;
   if (p?.sct === false) prefs.showCurrentTime = false;
   if (p?.sua === false) prefs.showUpdatedAt = false;
+  if (p?.sbs) prefs.scheduleBoundsSource = p.sbs;
   return prefs;
 }
 
@@ -239,6 +242,10 @@ export function getEffectiveRefreshInterval(prefs: FavoritesPrefs): number {
 
 export function getEffectiveTheme(prefs: FavoritesPrefs): 'light' | 'dark' | 'system' {
   return prefs.theme ?? DEFAULTS.theme;
+}
+
+export function getEffectiveScheduleBoundsSource(prefs: FavoritesPrefs): 'supabase' | 'static' {
+  return prefs.scheduleBoundsSource ?? DEFAULTS.scheduleBoundsSource;
 }
 
 // Check if a departure is a short turn (towards differs from canonical)

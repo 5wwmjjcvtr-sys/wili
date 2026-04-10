@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 export function SettingsView({ onEditFavorites }: { onEditFavorites: () => void }) {
   const { mode, setMode, showDebugUrl, setShowDebugUrl } = useDataProvider();
-  const { prefs, setDepCount, setRefreshInterval, setThemePref, setShowFirstDep, setShowLastDep, setShowTime, setShowTimeDiff, setShowCurrentTime, setShowUpdatedAt, editMode, setEditMode, hasFavorites } = useFavorites();
+  const { prefs, setDepCount, setRefreshInterval, setThemePref, setShowFirstDep, setShowLastDep, setShowTime, setShowTimeDiff, setShowCurrentTime, setShowUpdatedAt, setScheduleBoundsSource, scheduleBoundsSource, editMode, setEditMode, hasFavorites } = useFavorites();
   const depCount = prefs.depCount ?? 3;
   const refreshSec = prefs.refreshInterval ?? 30;
   const theme = prefs.theme ?? 'system';
@@ -117,6 +117,23 @@ export function SettingsView({ onEditFavorites }: { onEditFavorites: () => void 
           <SelectContent>
             <SelectItem value="proxy">Proxy</SelectItem>
             <SelectItem value="direct">Direkt</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Schedule bounds source */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="text-sm">Erste/Letzte Fahrt</Label>
+          <p className="text-xs text-muted-foreground">Statisch = lokale JSON-Datei, Supabase = Clouddatenbank</p>
+        </div>
+        <Select value={scheduleBoundsSource} onValueChange={(v) => setScheduleBoundsSource(v as 'supabase' | 'static')}>
+          <SelectTrigger className="w-28 h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="static">Statisch</SelectItem>
+            <SelectItem value="supabase">Supabase</SelectItem>
           </SelectContent>
         </Select>
       </div>

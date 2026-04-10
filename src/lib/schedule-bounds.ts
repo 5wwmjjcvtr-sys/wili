@@ -8,21 +8,55 @@ interface ScheduleBoundsEntry {
   lastDeparture: string;
 }
 
-const moduleCache = new Map<string, ScheduleBoundsEntry[]>();
+// ─── Supabase-Cache ───────────────────────────────────────────────────────────
+const supabaseCache = new Map<string, ScheduleBoundsEntry[]>();
 
-export async function fetchScheduleBounds(stopId: string): Promise<ScheduleBoundsEntry[]> {
-  if (moduleCache.has(stopId)) return moduleCache.get(stopId)!;
+async function fetchFromSupabase(stopId: string): Promise<ScheduleBoundsEntry[]> {
+  if (supabaseCache.has(stopId)) return supabaseCache.get(stopId)!;
   try {
     const { data, error } = await supabase.functions.invoke('schedule-bounds', {
       body: { stopId },
     });
     if (error) throw error;
     const result: ScheduleBoundsEntry[] = data?.bounds ?? [];
-    moduleCache.set(stopId, result);
+    supabaseCache.set(stopId, result);
     return result;
   } catch {
     return [];
   }
+}
+
+// ─── Statische JSON-Datei ─────────────────────────────────────────────────────
+let staticData: Record<string, ScheduleBoundsEntry[]> | null = null;
+let staticLoadPromise: Promise<Record<string, ScheduleBoundsEntry[]>> | null = null;
+
+async function loadStaticData(): Promise<Record<string, ScheduleBoundsEntry[]>> {
+  if (staticData !== null) return staticData;
+  if (staticLoadPromise) return staticLoadPromise;
+  staticLoadPromise = fetch('/schedule-bounds.json')
+    .then(res => {
+      if (!res.ok) throw new Error(`schedule-bounds.json: ${res.status}`);
+      return res.json();
+    })
+    .then(data => { staticData = data; return data; })
+    .catch(() => { staticData = {}; return {}; });
+  return staticLoadPromise;
+}
+
+async function fetchFromStatic(stopId: string): Promise<ScheduleBoundsEntry[]> {
+  const data = await loadStaticData();
+  const entries = data[stopId];
+  if (!entries || !Array.isArray(entries)) return [];
+  return entries;
+}
+
+// ─── Öffentliche API ──────────────────────────────────────────────────────────
+export async function fetchScheduleBounds(
+  stopId: string,
+  source: 'supabase' | 'static' = 'static'
+): Promise<ScheduleBoundsEntry[]> {
+  if (source === 'static') return fetchFromStatic(stopId);
+  return fetchFromSupabase(stopId);
 }
 
 /**
