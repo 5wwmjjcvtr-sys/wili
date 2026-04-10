@@ -22,12 +22,8 @@ export function mergeShortTurns(view: StationView): StationView {
     const merged: Direction[] = [];
     for (const [, dirs] of byDirectionId) {
       if (dirs.length === 1) { merged.push(dirs[0]); continue; }
-      // Hauptrichtung = längster towards-String (heuristisch: Endstation liegt weiter)
-      // Fallback: meiste Abfahrten
-      const byLength = [...dirs].sort((a, b) => b.towards.length - a.towards.length);
-      const main = byLength[0].towards.length > byLength[1].towards.length
-        ? byLength[0]
-        : dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
+      // Hauptrichtung = meiste Abfahrten
+      const main = dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
       const combined: Departure[] = [...main.departures];
       for (const short of dirs) {
         if (short === main) continue;
