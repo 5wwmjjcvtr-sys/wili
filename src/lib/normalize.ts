@@ -6,7 +6,7 @@ import { filterPhantomDepartures, PhantomFilterContext } from './departure-filte
 // Phantom-Filter benötigt wird. Wird vor der Rückgabe wieder entfernt.
 type BuildDep = Departure & { readonly onStop: boolean };
 
-type BuildDir = Omit<Direction, 'departures'> & { departures: BuildDep[] };
+type BuildDir = Omit<Direction, 'departures'> & { departures: BuildDep[]; lineTowards: string };
 type BuildLineEntry = { type: LineType; directions: Map<string, BuildDir> };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +22,12 @@ export function mergeShortTurns(view: StationView): StationView {
     const merged: Direction[] = [];
     for (const [, dirs] of byDirectionId) {
       if (dirs.length === 1) { merged.push(dirs[0]); continue; }
-      const main = dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
+      // Hauptrichtung = längster towards-String (heuristisch: Endstation liegt weiter)
+      // Fallback: meiste Abfahrten
+      const byLength = [...dirs].sort((a, b) => b.towards.length - a.towards.length);
+      const main = byLength[0].towards.length > byLength[1].towards.length
+        ? byLength[0]
+        : dirs.reduce((a, b) => a.departures.length >= b.departures.length ? a : b);
       const combined: Departure[] = [...main.departures];
       for (const short of dirs) {
         if (short === main) continue;
@@ -112,6 +117,7 @@ export function normalizeMonitorResponse(
             platform: platform || undefined,
             isBarrierFree: barrierFree,
             departures: [],
+            lineTowards: fallbackTowards,
           });
         }
 
@@ -181,11 +187,16 @@ export function normalizeMonitorResponse(
     }
     for (const [, dirKeys] of byDirectionId) {
       if (dirKeys.length <= 1) continue;
-      // Main direction = most departures
-      let mainKey = dirKeys[0];
-      for (const key of dirKeys.slice(1)) {
-        if ((lineEntry.directions.get(key)?.departures.length ?? 0) > (lineEntry.directions.get(mainKey)?.departures.length ?? 0)) {
-          mainKey = key;
+      // Hauptrichtung = diejenige deren towards mit dem line-level lineTowards übereinstimmt
+      // (z.B. "Simmering S U" statt "Gräßlplatz" als Kurzführung).
+      // Fallback: meiste Abfahrten.
+      const lineTowards = lineEntry.directions.get(dirKeys[0])!.lineTowards;
+      let mainKey = dirKeys.find(k => lineEntry.directions.get(k)?.towards === lineTowards) ?? dirKeys[0];
+      if (!dirKeys.find(k => lineEntry.directions.get(k)?.towards === lineTowards)) {
+        for (const key of dirKeys.slice(1)) {
+          if ((lineEntry.directions.get(key)?.departures.length ?? 0) > (lineEntry.directions.get(mainKey)?.departures.length ?? 0)) {
+            mainKey = key;
+          }
         }
       }
       const mainDir = lineEntry.directions.get(mainKey)!;
