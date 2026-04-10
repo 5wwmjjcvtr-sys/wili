@@ -1,6 +1,7 @@
 import { Departure } from '@/types/station';
 import { Badge } from '@/components/ui/badge';
 import { Accessibility } from 'lucide-react';
+import { useFavorites } from '@/providers/FavoritesContext';
 
 interface Props {
   departure: Departure;
@@ -9,6 +10,9 @@ interface Props {
 }
 
 export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props) {
+  const { prefs } = useFavorites();
+  const showTime = prefs.showTime !== false;
+  const showTimeDiff = prefs.showTimeDiff !== false;
   const formatTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -21,6 +25,17 @@ export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props
   const displayTime = departure.isRealtime && departure.timeReal
     ? formatTime(departure.timeReal)
     : formatTime(departure.timePlanned);
+
+  const timeDiff = (() => {
+    if (!departure.isRealtime || !departure.timeReal || !departure.timePlanned) return null;
+    const diffSec = (new Date(departure.timeReal).getTime() - new Date(departure.timePlanned).getTime()) / 1000;
+    if (Math.abs(diffSec) <= 30) return null;
+    const diffMin = Math.round(Math.abs(diffSec) / 60);
+    if (diffMin === 0) return null;
+    return diffSec > 0
+      ? { label: `-${diffMin}`, early: false }
+      : { label: `+${diffMin}`, early: true };
+  })();
 
   return (
     <div className="grid grid-cols-[0.75rem_0.875rem_3.25rem_5.5rem_minmax(0,1fr)] items-center gap-x-3 text-sm">
@@ -46,7 +61,12 @@ export function DepartureRow({ departure, isShortTurn, shortTurnTowards }: Props
       </span>
 
       <span className="text-muted-foreground text-xs tabular-nums">
-        {displayTime}
+        {showTime && displayTime}
+        {showTimeDiff && timeDiff && (
+          <span className={`ml-4 ${timeDiff.early ? 'text-green-500' : 'text-red-500'}`}>
+            {timeDiff.label}
+          </span>
+        )}
       </span>
 
       <div className="flex min-w-0 items-center gap-2">

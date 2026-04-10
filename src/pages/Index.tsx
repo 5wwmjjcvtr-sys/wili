@@ -96,17 +96,6 @@ function MonitorApp() {
       {/* Sticky tab bar */}
       <div className="flex border-b border-border sticky top-0 z-40 bg-background">
         <button
-          onClick={() => setActiveTab('favorites')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === 'favorites'
-              ? 'text-foreground border-b-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Star className="h-4 w-4" />
-          Favoriten
-        </button>
-        <button
           onClick={() => setActiveTab('search')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
             activeTab === 'search'
@@ -116,6 +105,17 @@ function MonitorApp() {
         >
           <Search className="h-4 w-4" />
           Station
+        </button>
+        <button
+          onClick={() => setActiveTab('favorites')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === 'favorites'
+              ? 'text-foreground border-b-2 border-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Star className="h-4 w-4" />
+          Favoriten
         </button>
       </div>
 
@@ -177,21 +177,19 @@ function MonitorApp() {
         </>
       )}
 
-      {activeTab === 'favorites' && <FavoritesView onOpenSettings={() => setActiveTab('settings')} />}
-      {activeTab === 'settings' && <SettingsView />}
+      {activeTab === 'favorites' && <FavoritesView />}
+      {activeTab === 'settings' && <SettingsView onEditFavorites={() => { setActiveTab('favorites'); }} />}
 
       {/* Bottom bar - only on search tab */}
       {activeTab === 'search' && (
         <div className="px-4 py-3 flex items-center justify-between gap-2">
           {showDebugUrl && lastApiUrl ? (
-            <a
-              href={lastApiUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-mono text-primary underline break-all leading-tight flex-1"
-            >
-              {lastApiUrl}
-            </a>
+            <div className="flex items-baseline gap-1.5 flex-1 min-w-0">
+              <a href={lastApiUrl} target="_blank" rel="noopener noreferrer" title={lastApiUrl}
+                className="text-[10px] text-primary underline shrink-0">
+                API ↗
+              </a>
+            </div>
           ) : <span />}
           <button
             onClick={() => setActiveTab('settings')}

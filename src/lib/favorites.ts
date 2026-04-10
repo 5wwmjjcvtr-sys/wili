@@ -7,7 +7,7 @@ export interface Favorite {
   transportType: LineType;
   richtungsId: string;
   direction: string;
-  directionKey: string; // e.g. "U1|1|H"
+  directionKey: string; // e.g. "at:49:1234|U1|1|Leopoldau" (stopId-scoped)
   canonicalToward: string;
   platform?: string;
   allowShortTurns: boolean;
@@ -22,6 +22,10 @@ export interface FavoritesPrefs {
   theme?: 'light' | 'dark' | 'system'; // default 'system'
   showFirstDep?: boolean; // default true
   showLastDep?: boolean; // default true
+  showTime?: boolean; // default true
+  showTimeDiff?: boolean; // default true
+  showCurrentTime?: boolean; // default true
+  showUpdatedAt?: boolean; // default true
 }
 
 export interface FavoritesContainer {
@@ -31,7 +35,7 @@ export interface FavoritesContainer {
 }
 
 const STORAGE_KEY = 'wl-favorites';
-const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system', showFirstDep: true, showLastDep: true };
+const DEFAULTS: Required<FavoritesPrefs> = { depCount: 3, mode: 'direct', refreshInterval: 30, theme: 'system', showFirstDep: true, showLastDep: true, showTime: true, showTimeDiff: true, showCurrentTime: true, showUpdatedAt: true };
 
 // ─── LocalStorage ───
 
@@ -40,7 +44,16 @@ export function loadFromStorage(): FavoritesContainer {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed?.v === 1) return parsed;
+      if (parsed?.v === 1) {
+        // Always rebuild directionKey so old favorites (without stopId) are migrated
+        return {
+          ...parsed,
+          favorites: (parsed.favorites ?? []).map((f: Favorite) => ({
+            ...f,
+            directionKey: buildDirectionKey(f.stopId, f.lineName, f.richtungsId, f.direction),
+          })),
+        };
+      }
     }
   } catch {}
   return { v: 1, favorites: [], prefs: {} };
@@ -52,8 +65,9 @@ export function saveToStorage(container: FavoritesContainer) {
 
 // ─── Direction key builder ───
 
-export function buildDirectionKey(lineName: string, richtungsId: string, direction: string): string {
-  return `${lineName}|${richtungsId}|${direction}`;
+// Format: "stopId|lineName|richtungsId|direction"  (station-scoped)
+export function buildDirectionKey(stopId: string, lineName: string, richtungsId: string, direction: string): string {
+  return `${stopId}|${lineName}|${richtungsId}|${direction}`;
 }
 
 // ─── URL Serialization ───
@@ -73,7 +87,7 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   if (container.prefs.mode && container.prefs.mode !== DEFAULTS.mode) {
     url.searchParams.set('m', container.prefs.mode);
   }
-  if (container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
+  if (container.prefs.refreshInterval !== undefined && container.prefs.refreshInterval !== DEFAULTS.refreshInterval) {
     url.searchParams.set('r', String(container.prefs.refreshInterval));
   }
   if (container.prefs.theme && container.prefs.theme !== DEFAULTS.theme) {
@@ -84,6 +98,18 @@ export function toReadableUrl(container: FavoritesContainer, baseUrl: string): s
   }
   if (container.prefs.showLastDep === false) {
     url.searchParams.set('sl', '0');
+  }
+  if (container.prefs.showTime === false) {
+    url.searchParams.set('st', '0');
+  }
+  if (container.prefs.showTimeDiff === false) {
+    url.searchParams.set('sd', '0');
+  }
+  if (container.prefs.showCurrentTime === false) {
+    url.searchParams.set('sct', '0');
+  }
+  if (container.prefs.showUpdatedAt === false) {
+    url.searchParams.set('sua', '0');
   }
   return url.toString();
 }
@@ -102,7 +128,7 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
       transportType: (transportType || 'bus') as LineType,
       richtungsId,
       direction,
-      directionKey: buildDirectionKey(lineName, richtungsId, direction),
+      directionKey: buildDirectionKey(stopId, lineName, richtungsId, direction),
       canonicalToward,
       platform: platform || undefined,
       allowShortTurns: true,
@@ -122,6 +148,10 @@ export function fromReadableUrl(url: URL): FavoritesContainer | null {
   if (t === 'light' || t === 'dark' || t === 'system') prefs.theme = t;
   if (url.searchParams.get('sf') === '0') prefs.showFirstDep = false;
   if (url.searchParams.get('sl') === '0') prefs.showLastDep = false;
+  if (url.searchParams.get('st') === '0') prefs.showTime = false;
+  if (url.searchParams.get('sd') === '0') prefs.showTimeDiff = false;
+  if (url.searchParams.get('sct') === '0') prefs.showCurrentTime = false;
+  if (url.searchParams.get('sua') === '0') prefs.showUpdatedAt = false;
 
   return { v: 1, favorites, prefs };
 }
@@ -145,10 +175,14 @@ export function toEncodedUrl(container: FavoritesContainer, baseUrl: string): st
       p: {
         ...(container.prefs.depCount && container.prefs.depCount !== DEFAULTS.depCount ? { n: container.prefs.depCount } : {}),
         ...(container.prefs.mode && container.prefs.mode !== DEFAULTS.mode ? { m: container.prefs.mode } : {}),
-        ...(container.prefs.refreshInterval && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
+        ...(container.prefs.refreshInterval !== undefined && container.prefs.refreshInterval !== DEFAULTS.refreshInterval ? { r: container.prefs.refreshInterval } : {}),
         ...(container.prefs.theme && container.prefs.theme !== DEFAULTS.theme ? { t: container.prefs.theme } : {}),
         ...(container.prefs.showFirstDep === false ? { sf: false } : {}),
         ...(container.prefs.showLastDep === false ? { sl: false } : {}),
+        ...(container.prefs.showTime === false ? { st: false } : {}),
+        ...(container.prefs.showTimeDiff === false ? { sd: false } : {}),
+        ...(container.prefs.showCurrentTime === false ? { sct: false } : {}),
+        ...(container.prefs.showUpdatedAt === false ? { sua: false } : {}),
       }
     } : {}),
   };
@@ -180,7 +214,7 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
       transportType: (f.t || 'bus') as LineType,
       richtungsId: f.r,
       direction: f.d,
-      directionKey: buildDirectionKey(f.l, f.r, f.d),
+      directionKey: buildDirectionKey(f.s, f.l, f.r, f.d),
       canonicalToward: f.c,
       platform: f.p || undefined,
       allowShortTurns: true,
@@ -195,6 +229,10 @@ export function fromEncodedUrl(url: URL): FavoritesContainer | null {
     if (compact.p?.t) prefs.theme = compact.p.t;
     if (compact.p?.sf === false) prefs.showFirstDep = false;
     if (compact.p?.sl === false) prefs.showLastDep = false;
+    if (compact.p?.st === false) prefs.showTime = false;
+    if (compact.p?.sd === false) prefs.showTimeDiff = false;
+    if (compact.p?.sct === false) prefs.showCurrentTime = false;
+    if (compact.p?.sua === false) prefs.showUpdatedAt = false;
 
     return { v: 1, favorites, prefs };
   } catch {

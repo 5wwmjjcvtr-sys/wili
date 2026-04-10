@@ -8,13 +8,18 @@ interface ScheduleBoundsEntry {
   lastDeparture: string;
 }
 
+const moduleCache = new Map<string, ScheduleBoundsEntry[]>();
+
 export async function fetchScheduleBounds(stopId: string): Promise<ScheduleBoundsEntry[]> {
+  if (moduleCache.has(stopId)) return moduleCache.get(stopId)!;
   try {
     const { data, error } = await supabase.functions.invoke('schedule-bounds', {
       body: { stopId },
     });
     if (error) throw error;
-    return data?.bounds ?? [];
+    const result: ScheduleBoundsEntry[] = data?.bounds ?? [];
+    moduleCache.set(stopId, result);
+    return result;
   } catch {
     return [];
   }

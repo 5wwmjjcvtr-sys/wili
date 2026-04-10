@@ -7,7 +7,7 @@ import { DepartureRow } from './DepartureRow';
 import { ShareLinks } from './ShareLinks';
 import { Separator } from '@/components/ui/separator';
 import { StatusBar } from './StatusBar';
-import { Star, Trash2, ChevronUp, ChevronDown, Pencil, Check, Settings } from 'lucide-react';
+import { Trash2, ChevronUp, ChevronDown, Check, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchScheduleBounds, mergeScheduleBounds } from '@/lib/schedule-bounds';
 
@@ -16,15 +16,14 @@ const UBAHN_COLORS: Record<string, string> = {
   U4: '#00A651', U5: '#A6C73A', U6: '#A8743A',
 };
 
-export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval } = useFavorites();
+export function FavoritesView() {
+  const { favorites, prefs, removeFavorite, moveStation, moveItem, refreshInterval, editMode, setEditMode, cacheStationTitle } = useFavorites();
   const { provider, showDebugUrl } = useDataProvider();
   const [stationViews, setStationViews] = useState<Map<string, StationView>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string>(new Date().toISOString());
-  const [apiUrls, setApiUrls] = useState<string[]>([]);
+  const [apiUrls, setApiUrls] = useState<Map<string, string>>(new Map());
   const boundsCache = useRef<Map<string, any[]>>(new Map());
 
   const depCount = getEffectiveDepCount(prefs);
@@ -39,13 +38,14 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
     if (showDebugUrl) {
       const { loadRblMapping } = await import('@/lib/stops-loader');
       const rblMap = await loadRblMapping();
-      const urls = stopIds.flatMap(stopId => {
+      const urlMap = new Map<string, string>();
+      for (const stopId of stopIds) {
         const rbls = rblMap.get(stopId) ?? [];
-        if (rbls.length === 0) return [];
+        if (rbls.length === 0) continue;
         const params = rbls.map(r => `stopId=${encodeURIComponent(r)}`).join('&');
-        return [`https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`];
-      });
-      setApiUrls(urls);
+        urlMap.set(stopId, `https://www.wienerlinien.at/ogd_realtime/monitor?${params}&activateTrafficInfo=stoerungkurz&activateTrafficInfo=aufzugsinfo`);
+      }
+      setApiUrls(urlMap);
     }
 
     try {
@@ -71,6 +71,7 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
         if (result.status === 'fulfilled') {
           const [stopId, view] = result.value;
           newMap.set(stopId, view);
+          if (view.station.title) cacheStationTitle(stopId, view.station.title);
         }
       }
       setStationViews(newMap);
@@ -109,6 +110,17 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
           onRefresh={loadFavorites}
         />
       )}
+      {editMode && (
+        <div className="px-4 py-2 flex justify-end border-b border-border">
+          <button
+            onClick={() => setEditMode(false)}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary"
+          >
+            <Check className="h-4 w-4" />
+            Fertig
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="px-4 py-3">
@@ -143,6 +155,13 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
                 <h3 className="text-base font-semibold text-foreground">{stationTitle}</h3>
                 {view?.stationInfrastructure?.hasElevatorIssue && (
                   <span className="text-base" title="Aufzugsstörung">🛗</span>
+                )}
+                {showDebugUrl && apiUrls.get(stopId) && (
+                  <a href={apiUrls.get(stopId)} target="_blank" rel="noopener noreferrer"
+                    title={apiUrls.get(stopId)}
+                    className="ml-1 text-muted-foreground hover:text-primary transition-colors">
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 )}
               </div>
               {favs.map((fav, itemIdx) => {
@@ -231,39 +250,6 @@ export function FavoritesView({ onOpenSettings }: { onOpenSettings: () => void }
 
       {editMode && <ShareLinks />}
 
-      {/* Bottom action buttons */}
-      <div className="px-4 py-3 flex items-center justify-between gap-2">
-        {showDebugUrl && apiUrls.length > 0 ? (
-          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-            {apiUrls.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                className="text-[10px] font-mono text-primary underline break-all leading-tight block">
-                {url}
-              </a>
-            ))}
-          </div>
-        ) : <span />}
-        <div className="flex shrink-0 gap-2">
-        <button
-          onClick={() => setEditMode(!editMode)}
-          className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
-            editMode
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground border border-border'
-          }`}
-          aria-label={editMode ? 'Bearbeitung beenden' : 'Bearbeiten'}
-        >
-          {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-        </button>
-        <button
-          onClick={onOpenSettings}
-          className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground border border-border transition-colors"
-          aria-label="Einstellungen"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
-        </div>
-      </div>
     </div>
   );
 }
