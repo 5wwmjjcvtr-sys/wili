@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
           const dirKey = `${directionId}_${towards}`;
 
           if (!entry.directions.has(dirKey)) {
-            entry.directions.set(dirKey, { directionId, towards, lineTowards: fallbackTowards, platform: platform || undefined, isBarrierFree: barrierFree, departures: [] });
+            entry.directions.set(dirKey, { directionId, towards, platform: platform || undefined, isBarrierFree: barrierFree, departures: [] });
           }
 
           const dir = entry.directions.get(dirKey)!;
@@ -200,36 +200,6 @@ Deno.serve(async (req) => {
             title: info.title ?? info.name ?? 'Aufzugsstörung',
             description: info.description ?? '',
           });
-        }
-      }
-    }
-
-    // Merge short-turns: same directionId, different towards → line.towards is the main direction
-    for (const [, e] of lineMap) {
-      const byDirId = new Map<string, string[]>();
-      for (const [dirKey, dir] of e.directions) {
-        const list = byDirId.get(dir.directionId) ?? [];
-        list.push(dirKey);
-        byDirId.set(dir.directionId, list);
-      }
-      for (const [, dirKeys] of byDirId) {
-        if (dirKeys.length <= 1) continue;
-        const lineTowardsVal: string = e.directions.get(dirKeys[0])?.lineTowards ?? '';
-        let mainKey = dirKeys.find(k => e.directions.get(k)?.towards === lineTowardsVal) ?? '';
-        if (!mainKey) {
-          // Fallback: most departures
-          mainKey = dirKeys.reduce((a, b) =>
-            (e.directions.get(b)?.departures.length ?? 0) > (e.directions.get(a)?.departures.length ?? 0) ? b : a
-          );
-        }
-        const mainDir = e.directions.get(mainKey)!;
-        for (const key of dirKeys) {
-          if (key === mainKey) continue;
-          const shortDir = e.directions.get(key)!;
-          for (const dep of shortDir.departures) {
-            mainDir.departures.push({ ...dep, shortTurnTowards: shortDir.towards });
-          }
-          e.directions.delete(key);
         }
       }
     }
